@@ -2,30 +2,21 @@ syntax = "proto3";
 package grpc;
 option go_package = "./proto";
 
-import "fulcrum.proto";
-
 service Broker{
-    rpc AddCity(AddCityRequest) returns (AddCityBrokerResponse);
-    rpc DeleteCity(DeleteCityRequest) returns (DeleteCityBrokerResponse);
-    rpc UpdateName(UpdateNameRequest) returns (UpdateNameBrokerResponse);
-    rpc UpdateNumber(UpdateNumberRequest) returns (UpdateNumberBrokerResponse);
+    rpc GetFulcrum(GetFulcrumRequest) returns (GetFulcrumResponse);
     rpc GetNumberRebeldes(GetNumberRebeldesRequest) returns (GetNumberRebeldesResponse);
+    // rpc AddCity(AddCityRequest) returns (AddCityBrokerResponse);
+    // rpc DeleteCity(DeleteCityRequest) returns (DeleteCityBrokerResponse);
+    // rpc UpdateName(UpdateNameRequest) returns (UpdateNameBrokerResponse);
+    // rpc UpdateNumber(UpdateNumberRequest) returns (UpdateNumberBrokerResponse);
 }
 
-message AddCityBrokerResponse{
-    string direccion_fulcrum = 1;
+message GetFulcrumRequest{
+    string mensaje = 1;
 }
 
-message UpdateNameBrokerResponse{
-    string direccion_fulcrum = 1;
-}
-
-message UpdateNumberBrokerResponse{
-    string direccion_fulcrum = 1;
-}
-
-message DeleteCityBrokerResponse{
-    string direccion_fulcrum = 1;
+message GetFulcrumResponse{
+    string ipFulcrum = 1;
 }
 
 message GetNumberRebeldesRequest{
@@ -39,4 +30,22 @@ message GetNumberRebeldesResponse{
     int32 y = 3;
     int32 z = 4;
 }
+
+// message AddCityBrokerResponse{
+//     string direccion_fulcrum = 1;
+// }
+
+// message UpdateNameBrokerResponse{
+//     string direccion_fulcrum = 1;
+// }
+
+// message UpdateNumberBrokerResponse{
+//     string direccion_fulcrum = 1;
+// }
+
+// message DeleteCityBrokerResponse{
+//     string direccion_fulcrum = 1;
+// }
+
+
 

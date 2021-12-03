@@ -18,10 +18,7 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type BrokerClient interface {
-	AddCity(ctx context.Context, in *AddCityRequest, opts ...grpc.CallOption) (*AddCityBrokerResponse, error)
-	DeleteCity(ctx context.Context, in *DeleteCityRequest, opts ...grpc.CallOption) (*DeleteCityBrokerResponse, error)
-	UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...grpc.CallOption) (*UpdateNameBrokerResponse, error)
-	UpdateNumber(ctx context.Context, in *UpdateNumberRequest, opts ...grpc.CallOption) (*UpdateNumberBrokerResponse, error)
+	GetFulcrum(ctx context.Context, in *GetFulcrumRequest, opts ...grpc.CallOption) (*GetFulcrumResponse, error)
 	GetNumberRebeldes(ctx context.Context, in *GetNumberRebeldesRequest, opts ...grpc.CallOption) (*GetNumberRebeldesResponse, error)
 }
 
@@ -33,36 +30,9 @@ func NewBrokerClient(cc grpc.ClientConnInterface) BrokerClient {
 	return &brokerClient{cc}
 }
 
-func (c *brokerClient) AddCity(ctx context.Context, in *AddCityRequest, opts ...grpc.CallOption) (*AddCityBrokerResponse, error) {
-	out := new(AddCityBrokerResponse)
-	err := c.cc.Invoke(ctx, "/grpc.Broker/AddCity", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *brokerClient) DeleteCity(ctx context.Context, in *DeleteCityRequest, opts ...grpc.CallOption) (*DeleteCityBrokerResponse, error) {
-	out := new(DeleteCityBrokerResponse)
-	err := c.cc.Invoke(ctx, "/grpc.Broker/DeleteCity", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *brokerClient) UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...grpc.CallOption) (*UpdateNameBrokerResponse, error) {
-	out := new(UpdateNameBrokerResponse)
-	err := c.cc.Invoke(ctx, "/grpc.Broker/UpdateName", in, out, opts...)
-	if err != nil {
-		return nil, err
-	}
-	return out, nil
-}
-
-func (c *brokerClient) UpdateNumber(ctx context.Context, in *UpdateNumberRequest, opts ...grpc.CallOption) (*UpdateNumberBrokerResponse, error) {
-	out := new(UpdateNumberBrokerResponse)
-	err := c.cc.Invoke(ctx, "/grpc.Broker/UpdateNumber", in, out, opts...)
+func (c *brokerClient) GetFulcrum(ctx context.Context, in *GetFulcrumRequest, opts ...grpc.CallOption) (*GetFulcrumResponse, error) {
+	out := new(GetFulcrumResponse)
+	err := c.cc.Invoke(ctx, "/grpc.Broker/GetFulcrum", in, out, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -82,10 +52,7 @@ func (c *brokerClient) GetNumberRebeldes(ctx context.Context, in *GetNumberRebel
 // All implementations must embed UnimplementedBrokerServer
 // for forward compatibility
 type BrokerServer interface {
-	AddCity(context.Context, *AddCityRequest) (*AddCityBrokerResponse, error)
-	DeleteCity(context.Context, *DeleteCityRequest) (*DeleteCityBrokerResponse, error)
-	UpdateName(context.Context, *UpdateNameRequest) (*UpdateNameBrokerResponse, error)
-	UpdateNumber(context.Context, *UpdateNumberRequest) (*UpdateNumberBrokerResponse, error)
+	GetFulcrum(context.Context, *GetFulcrumRequest) (*GetFulcrumResponse, error)
 	GetNumberRebeldes(context.Context, *GetNumberRebeldesRequest) (*GetNumberRebeldesResponse, error)
 	mustEmbedUnimplementedBrokerServer()
 }
@@ -94,17 +61,8 @@ type BrokerServer interface {
 type UnimplementedBrokerServer struct {
 }
 
-func (UnimplementedBrokerServer) AddCity(context.Context, *AddCityRequest) (*AddCityBrokerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method AddCity not implemented")
-}
-func (UnimplementedBrokerServer) DeleteCity(context.Context, *DeleteCityRequest) (*DeleteCityBrokerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method DeleteCity not implemented")
-}
-func (UnimplementedBrokerServer) UpdateName(context.Context, *UpdateNameRequest) (*UpdateNameBrokerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateName not implemented")
-}
-func (UnimplementedBrokerServer) UpdateNumber(context.Context, *UpdateNumberRequest) (*UpdateNumberBrokerResponse, error) {
-	return nil, status.Errorf(codes.Unimplemented, "method UpdateNumber not implemented")
+func (UnimplementedBrokerServer) GetFulcrum(context.Context, *GetFulcrumRequest) (*GetFulcrumResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFulcrum not implemented")
 }
 func (UnimplementedBrokerServer) GetNumberRebeldes(context.Context, *GetNumberRebeldesRequest) (*GetNumberRebeldesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNumberRebeldes not implemented")
@@ -122,74 +80,20 @@ func RegisterBrokerServer(s grpc.ServiceRegistrar, srv BrokerServer) {
 	s.RegisterService(&Broker_ServiceDesc, srv)
 }
 
-func _Broker_AddCity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(AddCityRequest)
+func _Broker_GetFulcrum_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFulcrumRequest)
 	if err := dec(in); err != nil {
 		return nil, err
 	}
 	if interceptor == nil {
-		return srv.(BrokerServer).AddCity(ctx, in)
+		return srv.(BrokerServer).GetFulcrum(ctx, in)
 	}
 	info := &grpc.UnaryServerInfo{
 		Server:     srv,
-		FullMethod: "/grpc.Broker/AddCity",
+		FullMethod: "/grpc.Broker/GetFulcrum",
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BrokerServer).AddCity(ctx, req.(*AddCityRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Broker_DeleteCity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(DeleteCityRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BrokerServer).DeleteCity(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/grpc.Broker/DeleteCity",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BrokerServer).DeleteCity(ctx, req.(*DeleteCityRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Broker_UpdateName_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateNameRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BrokerServer).UpdateName(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/grpc.Broker/UpdateName",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BrokerServer).UpdateName(ctx, req.(*UpdateNameRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
-func _Broker_UpdateNumber_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(UpdateNumberRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(BrokerServer).UpdateNumber(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: "/grpc.Broker/UpdateNumber",
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(BrokerServer).UpdateNumber(ctx, req.(*UpdateNumberRequest))
+		return srv.(BrokerServer).GetFulcrum(ctx, req.(*GetFulcrumRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -220,20 +124,8 @@ var Broker_ServiceDesc = grpc.ServiceDesc{
 	HandlerType: (*BrokerServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
-			MethodName: "AddCity",
-			Handler:    _Broker_AddCity_Handler,
-		},
-		{
-			MethodName: "DeleteCity",
-			Handler:    _Broker_DeleteCity_Handler,
-		},
-		{
-			MethodName: "UpdateName",
-			Handler:    _Broker_UpdateName_Handler,
-		},
-		{
-			MethodName: "UpdateNumber",
-			Handler:    _Broker_UpdateNumber_Handler,
+			MethodName: "GetFulcrum",
+			Handler:    _Broker_GetFulcrum_Handler,
 		},
 		{
 			MethodName: "GetNumberRebeldes",
