@@ -3,6 +3,7 @@ package main
 import (
 	"context"
 	"log"
+	"math/rand"
 	"net"
 
 	pb "github.com/axel-arroyo/sd-lab-3/gen/proto"
@@ -13,25 +14,13 @@ type BrokerServer struct {
 	pb.UnimplementedBrokerServer
 }
 
-// func (s *BrokerServer) AddCity(ctx context.Context, req *pb.AddCityRequest) (*pb.AddCityBrokerResponse, error) {
-// 	log.Printf("AddCity: %v", req)
-// 	return nil, nil
-// }
+const (
+	portFulcrum = ":50050"
+)
 
-// func (s *BrokerServer) DeleteCity(ctx context.Context, req *pb.DeleteCityRequest) (*pb.DeleteCityBrokerResponse, error) {
-// 	log.Printf("DeleteCity: %v", req)
-// 	return nil, nil
-// }
-
-// func (s *BrokerServer) UpdateName(ctx context.Context, req *pb.UpdateNameRequest) (*pb.UpdateNameBrokerResponse, error) {
-// 	log.Printf("UpdateName: %v", req)
-// 	return nil, nil
-// }
-
-// func (s *BrokerServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRequest) (*pb.UpdateNumberBrokerResponse, error) {
-// 	log.Printf("UpdateNumber: %v", req)
-// 	return nil, nil
-// }
+var (
+	ipFulcrum = [3]string{"10.6.43.77", "10.6.43.78", "10.6.43.79"}
+)
 
 func (s *BrokerServer) GetNumberRebeldes(ctx context.Context, req *pb.GetNumberRebeldesRequest) (*pb.GetNumberRebeldesResponse, error) {
 	// Leia llama esta wea
@@ -43,8 +32,11 @@ func (s *BrokerServer) GetNumberRebeldes(ctx context.Context, req *pb.GetNumberR
 
 func (s *BrokerServer) GetFulcrum(ctx context.Context, req *pb.GetFulcrumRequest) (*pb.GetFulcrumResponse, error) {
 	// Informantes llaman para saber a que fulcrum se refiere
-	log.Printf("GetFulcrum: %v", req)
-	return nil, nil
+	// pick a random ip from ipFulcrum
+	index := rand.Intn(3)
+	ip := ipFulcrum[index]
+	// return ip
+	return &pb.GetFulcrumResponse{IpFulcrum: ip}, nil
 }
 
 func main() {

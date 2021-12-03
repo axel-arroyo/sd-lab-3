@@ -4,3 +4,6 @@ create:
 
 clean:
 	rm gen/proto/*.go
+
+clear:
+	rm fulcrum/planets/* & rm fulcrum/log.txt

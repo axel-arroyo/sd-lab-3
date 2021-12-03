@@ -1,0 +1,21 @@
+Integrantes:
+- Axel Arroyo Gómez             201873011-4
+- Vicente De La Rosa Sánchez    201873002-5
+
+Configuración de máquinas
+
+dist197     -> Fulcrum1     -> 10.6.43.77:50050
+            -> Leia
+
+dist198     -> Fulcrum2     -> 10.6.43.78:50050
+            -> Informante1 
+
+dist199     -> Fulcrum3     -> 10.6.43.79:50050
+            -> Informante2 
+
+dist200     -> Broker       -> 10.6.43.80:50051
+
+Instrucciones:
+Ingresar a la carpeta con el nombre de la máquina según corresponda y revisar README.
+Asegurarse de que los puertos no están siendo utilizados por algún otro proceso.
+Asegurarse de hacer make clean antes de make run para eliminar archivos que ya existan.
