@@ -1,57 +1,57 @@
 syntax = "proto3";
-
 package grpc;
-
 option go_package = "./proto";
 
 service Fulcrum{
-    rpc Almacenar(AlmacenarRequest) returns (AlmacenarResponse);
     rpc AddCity(AddCityRequest) returns (AddCityResponse);
     rpc DeleteCity(DeleteCityRequest) returns (DeleteCityResponse);
     rpc UpdateName(UpdateNameRequest) returns (UpdateNameResponse);
     rpc UpdateNumber(UpdateNumberRequest) returns (UpdateNumberResponse);
 }
 
-message AlmacenarRequest{
-    string nombre = 1;
-    string valor = 2;
-}
-
-message AlmacenarResponse{
-    string mensaje = 1;
-}
-
 message AddCityRequest{
-    string nombre = 1;
-    string numero = 2;
+    string nombre_planeta = 1;
+    string nombre_ciudad = 2;
+    int32 soldados = 3;
 }
 
 message AddCityResponse{
-    string mensaje = 1;
-}
-
-message DeleteCityRequest{
-    string nombre = 1;
-}
-
-message DeleteCityResponse{
-    string mensaje = 1;
+    int32 x = 1;
+    int32 y = 2;
+    int32 z = 3;
 }
 
 message UpdateNameRequest{
-    string nombre = 1;
-    string nuevoNombre = 2;
+    string nombre_planeta = 1;
+    string nombre_ciudad = 2;
+    string nuevo_nombre = 3;
 }
 
 message UpdateNameResponse{
-    string mensaje = 1;
+    int32 x = 1;
+    int32 y = 2;
+    int32 z = 3;
 }
 
 message UpdateNumberRequest{
-    string nombre = 1;
-    string nuevoNumero = 2;
+    string nombre_planeta = 1;
+    string nombre_ciudad = 2;
+    int32 nuevo_numero = 3;
 }
 
 message UpdateNumberResponse{
-    string mensaje = 1;
+    int32 x = 1;
+    int32 y = 2;
+    int32 z = 3;
+}
+
+message DeleteCityRequest{
+    string nombre_planeta = 1;
+    string nombre_ciudad = 2;
+}
+
+message DeleteCityResponse{
+    int32 x = 1;
+    int32 y = 2;
+    int32 z = 3;
 }

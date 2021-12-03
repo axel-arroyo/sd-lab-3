@@ -1,9 +1,42 @@
 syntax = "proto3";
-
 package grpc;
-
 option go_package = "./proto";
 
+import "fulcrum.proto";
+
 service Broker{
-    
+    rpc AddCity(AddCityRequest) returns (AddCityBrokerResponse);
+    rpc DeleteCity(DeleteCityRequest) returns (DeleteCityBrokerResponse);
+    rpc UpdateName(UpdateNameRequest) returns (UpdateNameBrokerResponse);
+    rpc UpdateNumber(UpdateNumberRequest) returns (UpdateNumberBrokerResponse);
+    rpc GetNumberRebeldes(GetNumberRebeldesRequest) returns (GetNumberRebeldesResponse);
 }
+
+message AddCityBrokerResponse{
+    string direccion_fulcrum = 1;
+}
+
+message UpdateNameBrokerResponse{
+    string direccion_fulcrum = 1;
+}
+
+message UpdateNumberBrokerResponse{
+    string direccion_fulcrum = 1;
+}
+
+message DeleteCityBrokerResponse{
+    string direccion_fulcrum = 1;
+}
+
+message GetNumberRebeldesRequest{
+    string nombre_planeta = 1;
+    string nombre_ciudad = 2;
+}
+
+message GetNumberRebeldesResponse{
+    int32 numero_rebeldes = 1;
+    int32 x = 2;
+    int32 y = 3;
+    int32 z = 4;
+}
+
