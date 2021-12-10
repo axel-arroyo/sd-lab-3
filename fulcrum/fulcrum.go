@@ -195,7 +195,9 @@ func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.Ge
 	// read planet file
 	filename, err := os.OpenFile("fulcrum/planets/"+req.NombrePlaneta+".txt", os.O_RDWR, 0644)
 	if err != nil {
-		log.Fatal(err)
+		return &pb.GetNumberRebeldesResponse{
+			NumeroRebeldes: 0,
+		}, nil
 	}
 	defer filename.Close()
 	// read line with city name
