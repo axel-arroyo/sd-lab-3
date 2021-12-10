@@ -9,7 +9,7 @@ import (
 )
 
 const (
-	portBroker = ":50054"
+	portBroker = ":50051"
 	ipBroker   = "10.6.43.80"
 )
 

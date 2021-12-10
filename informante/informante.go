@@ -13,7 +13,7 @@ import (
 
 const (
 	portFulcrum = ":50050"
-	portBroker  = ":50054"
+	portBroker  = ":50051"
 	ipBroker    = "10.6.43.80"
 )
 
