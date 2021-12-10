@@ -132,29 +132,25 @@ func Menu() {
 	line, _ = inputReader.ReadString('\n')
 	line = strings.TrimSuffix(line, "\n")
 	fmt.Printf("line: %s\n", line)
-	// while line is not empty
-	for line != "" {
-		// command is first word
-		command := line[:strings.Index(line, " ")]
-		// args is the rest
-		args := line[strings.Index(line, " ")+1:]
-		fmt.Printf("command: %s\n", command)
-		fmt.Printf("args: %s\n", args)
-		switch command {
-		case "AddCity":
-			addCity(args)
-		case "UpdateNumber":
-			updateNumber(args)
-		case "UpdateName":
-			updateName(args)
-		case "DeleteCity":
-			deleteCity(args)
-		default:
-			fmt.Println("Comando no reconocido")
-		}
-		fmt.Println("Esperando comando...")
-		fmt.Scanln(&line)
+	// command is first word
+	command := line[:strings.Index(line, " ")]
+	// args is the rest
+	args := line[strings.Index(line, " ")+1:]
+	fmt.Printf("command: %s\n", command)
+	fmt.Printf("args: %s\n", args)
+	switch command {
+	case "AddCity":
+		addCity(args)
+	case "UpdateNumber":
+		updateNumber(args)
+	case "UpdateName":
+		updateName(args)
+	case "DeleteCity":
+		deleteCity(args)
+	default:
+		fmt.Println("Comando no reconocido")
 	}
+	Menu()
 }
 
 func main() {
