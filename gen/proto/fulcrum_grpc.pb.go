@@ -22,6 +22,7 @@ type FulcrumClient interface {
 	DeleteCity(ctx context.Context, in *DeleteCityRequest, opts ...grpc.CallOption) (*DeleteCityResponse, error)
 	UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...grpc.CallOption) (*UpdateNameResponse, error)
 	UpdateNumber(ctx context.Context, in *UpdateNumberRequest, opts ...grpc.CallOption) (*UpdateNumberResponse, error)
+	GetNumberRebeldesFulcrum(ctx context.Context, in *GetNumberRebeldesRequest, opts ...grpc.CallOption) (*GetNumberRebeldesResponse, error)
 }
 
 type fulcrumClient struct {
@@ -68,6 +69,15 @@ func (c *fulcrumClient) UpdateNumber(ctx context.Context, in *UpdateNumberReques
 	return out, nil
 }
 
+func (c *fulcrumClient) GetNumberRebeldesFulcrum(ctx context.Context, in *GetNumberRebeldesRequest, opts ...grpc.CallOption) (*GetNumberRebeldesResponse, error) {
+	out := new(GetNumberRebeldesResponse)
+	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/GetNumberRebeldesFulcrum", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FulcrumServer is the server API for Fulcrum service.
 // All implementations must embed UnimplementedFulcrumServer
 // for forward compatibility
@@ -76,6 +86,7 @@ type FulcrumServer interface {
 	DeleteCity(context.Context, *DeleteCityRequest) (*DeleteCityResponse, error)
 	UpdateName(context.Context, *UpdateNameRequest) (*UpdateNameResponse, error)
 	UpdateNumber(context.Context, *UpdateNumberRequest) (*UpdateNumberResponse, error)
+	GetNumberRebeldesFulcrum(context.Context, *GetNumberRebeldesRequest) (*GetNumberRebeldesResponse, error)
 	mustEmbedUnimplementedFulcrumServer()
 }
 
@@ -94,6 +105,9 @@ func (UnimplementedFulcrumServer) UpdateName(context.Context, *UpdateNameRequest
 }
 func (UnimplementedFulcrumServer) UpdateNumber(context.Context, *UpdateNumberRequest) (*UpdateNumberResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNumber not implemented")
+}
+func (UnimplementedFulcrumServer) GetNumberRebeldesFulcrum(context.Context, *GetNumberRebeldesRequest) (*GetNumberRebeldesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetNumberRebeldesFulcrum not implemented")
 }
 func (UnimplementedFulcrumServer) mustEmbedUnimplementedFulcrumServer() {}
 
@@ -180,6 +194,24 @@ func _Fulcrum_UpdateNumber_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Fulcrum_GetNumberRebeldesFulcrum_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetNumberRebeldesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FulcrumServer).GetNumberRebeldesFulcrum(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.Fulcrum/GetNumberRebeldesFulcrum",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FulcrumServer).GetNumberRebeldesFulcrum(ctx, req.(*GetNumberRebeldesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Fulcrum_ServiceDesc is the grpc.ServiceDesc for Fulcrum service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -202,6 +234,10 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "UpdateNumber",
 			Handler:    _Fulcrum_UpdateNumber_Handler,
+		},
+		{
+			MethodName: "GetNumberRebeldesFulcrum",
+			Handler:    _Fulcrum_GetNumberRebeldesFulcrum_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

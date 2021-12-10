@@ -2,11 +2,14 @@ syntax = "proto3";
 package grpc;
 option go_package = "./proto";
 
+import "broker.proto";
+
 service Fulcrum{
     rpc AddCity(AddCityRequest) returns (AddCityResponse);
     rpc DeleteCity(DeleteCityRequest) returns (DeleteCityResponse);
     rpc UpdateName(UpdateNameRequest) returns (UpdateNameResponse);
     rpc UpdateNumber(UpdateNumberRequest) returns (UpdateNumberResponse);
+    rpc GetNumberRebeldesFulcrum(GetNumberRebeldesRequest) returns (GetNumberRebeldesResponse);
 }
 
 message AddCityRequest{

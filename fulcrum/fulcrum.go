@@ -191,6 +191,11 @@ func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRe
 	return nil, nil
 }
 
+func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.GetNumberRebeldesRequest) (*pb.GetNumberRebeldesResponse, error) {
+	log.Printf("GetNumberRebeldesFulcrum: %v", req)
+	return nil, nil
+}
+
 func main() {
 	// Crear archivo log.txt
 	filename, ferr := os.Create("fulcrum/log.txt")
@@ -207,6 +212,7 @@ func main() {
 	// addCityToFile("Kamino", "Tipoca_City", 1000)
 	// addCityToFile("Kamino", "Derem_City", 0)
 	// deleteCity("Tatooine", "Mos_Eisley_2")
+
 	// Escuchar en el puerto 50050
 	lis, err := net.Listen("tcp", ":50050")
 	if err != nil {
