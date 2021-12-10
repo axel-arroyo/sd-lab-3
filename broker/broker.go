@@ -38,11 +38,6 @@ func (s *BrokerServer) GetNumberRebeldes(ctx context.Context, req *pb.GetNumberR
 		log.Printf("Received: %d", r.NumeroRebeldes)
 	}
 	return &pb.GetNumberRebeldesResponse{NumeroRebeldes: 0}, nil
-	// Leia llama esta wea
-	// Consulta al Fulcrum
-	// Response a Leia
-	log.Printf("NumberRebeldes: %v", req)
-	return nil, nil
 }
 
 func (s *BrokerServer) GetFulcrum(ctx context.Context, req *pb.GetFulcrumRequest) (*pb.GetFulcrumResponse, error) {

@@ -192,8 +192,28 @@ func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRe
 }
 
 func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.GetNumberRebeldesRequest) (*pb.GetNumberRebeldesResponse, error) {
-	log.Printf("GetNumberRebeldesFulcrum: %v", req)
-	return nil, nil
+	// read planet file
+	filename, err := os.OpenFile("fulcrum/planets/"+req.NombrePlaneta+".txt", os.O_RDWR, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer filename.Close()
+	// read line with city name
+	scanner := bufio.NewScanner(filename)
+	for scanner.Scan() {
+		line := scanner.Text()
+		if strings.Contains(line, req.NombreCiudad) {
+			// get number of soldiers
+			numero_soldados := strings.Split(line, " ")[2]
+			numero_soldados_int, _ := strconv.Atoi(numero_soldados)
+			return &pb.GetNumberRebeldesResponse{
+				NumeroRebeldes: int32(numero_soldados_int),
+			}, nil
+		}
+	}
+	return &pb.GetNumberRebeldesResponse{
+		NumeroRebeldes: 0,
+	}, nil
 }
 
 func main() {
