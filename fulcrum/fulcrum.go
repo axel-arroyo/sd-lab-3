@@ -172,23 +172,24 @@ func updateCiudad(nombre_planeta string, nombre_ciudad string, nombre_reemplazo 
 }
 
 func (s *FulcrumServer) AddCity(ctx context.Context, req *pb.AddCityRequest) (*pb.AddCityResponse, error) {
-	log.Printf("AddCity: %v", req)
-	return nil, nil
+	// AddCity
+	addCityToFile(req.NombrePlaneta, req.NombreCiudad, req.Soldados)
+	return &pb.AddCityResponse{}, nil
 }
 
 func (s *FulcrumServer) DeleteCity(ctx context.Context, req *pb.DeleteCityRequest) (*pb.DeleteCityResponse, error) {
-	log.Printf("DeleteCity: %v", req)
-	return nil, nil
+	deleteCity(req.NombrePlaneta, req.NombreCiudad)
+	return &pb.DeleteCityResponse{}, nil
 }
 
 func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameRequest) (*pb.UpdateNameResponse, error) {
-	log.Printf("UpdateName: %v", req)
-	return nil, nil
+	updateCiudad(req.NombrePlaneta, req.NombreCiudad, req.NuevoNombre)
+	return &pb.UpdateNameResponse{}, nil
 }
 
 func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRequest) (*pb.UpdateNumberResponse, error) {
-	log.Printf("UpdateNumber: %v", req)
-	return nil, nil
+	updateSoldados(req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero)
+	return &pb.UpdateNumberResponse{}, nil
 }
 
 func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.GetNumberRebeldesRequest) (*pb.GetNumberRebeldesResponse, error) {
