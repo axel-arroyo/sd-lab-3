@@ -23,6 +23,21 @@ var (
 )
 
 func (s *BrokerServer) GetNumberRebeldes(ctx context.Context, req *pb.GetNumberRebeldesRequest) (*pb.GetNumberRebeldesResponse, error) {
+	// get the number of rebelds from the 3 fulcrums
+	for i := 0; i < 3; i++ {
+		conn, err := grpc.Dial(ipFulcrum[i]+portFulcrum, grpc.WithInsecure())
+		if err != nil {
+			log.Fatalf("did not connect: %v", err)
+		}
+		defer conn.Close()
+		c := pb.NewFulcrumClient(conn)
+		r, err := c.GetNumberRebeldesFulcrum(ctx, req)
+		if err != nil {
+			log.Fatalf("could not greet: %v", err)
+		}
+		log.Printf("Received: %d", r.NumeroRebeldes)
+	}
+	return &pb.GetNumberRebeldesResponse{NumeroRebeldes: 0}, nil
 	// Leia llama esta wea
 	// Consulta al Fulcrum
 	// Response a Leia
