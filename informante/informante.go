@@ -1,9 +1,11 @@
 package main
 
 import (
+	"bufio"
 	"context"
 	"fmt"
 	"log"
+	"os"
 	"strconv"
 	"strings"
 
@@ -126,13 +128,18 @@ func Menu() {
 	var line string
 	fmt.Println("Esperando comando...")
 	// read line
-	fmt.Scanln(&line)
+	inputReader := bufio.NewReader(os.Stdin)
+	line, _ = inputReader.ReadString('\n')
+	line = strings.TrimSuffix(line, "\n")
+	fmt.Printf("line: %s\n", line)
 	// while line is not empty
 	for line != "" {
 		// command is first word
 		command := line[:strings.Index(line, " ")]
 		// args is the rest
 		args := line[strings.Index(line, " ")+1:]
+		fmt.Printf("command: %s\n", command)
+		fmt.Printf("args: %s\n", args)
 		switch command {
 		case "AddCity":
 			addCity(args)

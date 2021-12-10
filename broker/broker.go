@@ -37,6 +37,7 @@ func (s *BrokerServer) GetNumberRebeldes(ctx context.Context, req *pb.GetNumberR
 		}
 		log.Printf("Received: %d", r.NumeroRebeldes)
 	}
+	// que wea hacer ahora?
 	return &pb.GetNumberRebeldesResponse{NumeroRebeldes: 0}, nil
 }
 
