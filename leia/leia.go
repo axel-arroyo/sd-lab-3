@@ -3,7 +3,6 @@ package main
 import (
 	"context"
 	"fmt"
-	"strings"
 
 	pb "github.com/axel-arroyo/sd-lab-3/gen/proto"
 	"google.golang.org/grpc"
@@ -34,23 +33,20 @@ func GetNumberRebelds(planet string, city string) {
 }
 
 func Menu() {
-	var line string
 	fmt.Println("Esperando comando...")
 	// read line
-	fmt.Scanln(&line)
-	// while line is not empty
-	for line != "" {
-		// parse line
-		tokens := strings.Split(line, " ")
-		command := tokens[0]
-		planet := tokens[1]
-		city := tokens[2]
+	var command string
+	var planet string
+	var city string
+	fmt.Scanln(&command, &planet, &city)
+	// while command is not empty
+	for command != "" {
 		if command == "GetNumberRebelds" {
 			GetNumberRebelds(planet, city)
 		} else {
 			fmt.Println("Comando não reconhecido")
 		}
-		fmt.Scanln(&line)
+		fmt.Scanln(&command, &planet, &city)
 	}
 }
 
