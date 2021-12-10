@@ -13,7 +13,7 @@ dist198     -> Fulcrum2     -> 10.6.43.78:50050
 dist199     -> Fulcrum3     -> 10.6.43.79:50050
             -> Informante2 
 
-dist200     -> Broker       -> 10.6.43.80:50051
+dist200     -> Broker       -> 10.6.43.80:50054
 
 Instrucciones:
 Ingresar a la carpeta con el nombre de la máquina según corresponda y revisar README.
