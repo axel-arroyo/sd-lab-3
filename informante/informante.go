@@ -19,6 +19,10 @@ const (
 	ipBroker    = "10.6.43.80"
 )
 
+var lastCommand string
+var lastVectorClock [3]int
+var lastFulcrumIP string
+
 func getFulcrumIp() string {
 	// connect to broker
 	conn, err := grpc.Dial(ipBroker+portBroker, grpc.WithInsecure())
@@ -33,6 +37,17 @@ func getFulcrumIp() string {
 	}
 	ipFulcrum := resp.IpFulcrum
 	return ipFulcrum
+}
+
+func updateVectorClock(resp *pb.VectorClock) {
+	switch lastFulcrumIP {
+	case "10.6.43.77":
+		lastVectorClock[0] = int(resp.X)
+	case "10.6.43.78":
+		lastVectorClock[1] = int(resp.Y)
+	case "10.6.43.79":
+		lastVectorClock[2] = int(resp.Z)
+	}
 }
 
 func addCity(args string) {
@@ -53,11 +68,13 @@ func addCity(args string) {
 	}
 	defer conn.Close()
 	clientFulcrum := pb.NewFulcrumClient(conn)
-	_, err = clientFulcrum.AddCity(context.Background(), &pb.AddCityRequest{NombrePlaneta: planet, NombreCiudad: city, Soldados: int32(number)})
+	resp, err := clientFulcrum.AddCity(context.Background(), &pb.AddCityRequest{NombrePlaneta: planet, NombreCiudad: city, Soldados: int32(number)})
 	if err != nil {
 		log.Fatalf("error contacting fulcrum: %v", err)
 	}
 	fmt.Println("City added")
+	lastFulcrumIP = ipFulcrum
+	updateVectorClock(resp)
 }
 
 func updateNumber(args string) {
@@ -76,11 +93,13 @@ func updateNumber(args string) {
 	}
 	defer conn.Close()
 	clientFulcrum := pb.NewFulcrumClient(conn)
-	_, err = clientFulcrum.UpdateNumber(context.Background(), &pb.UpdateNumberRequest{NombrePlaneta: planet, NombreCiudad: city, NuevoNumero: int32(number)})
+	resp, err := clientFulcrum.UpdateNumber(context.Background(), &pb.UpdateNumberRequest{NombrePlaneta: planet, NombreCiudad: city, NuevoNumero: int32(number)})
 	if err != nil {
 		log.Fatalf("error contacting fulcrum: %v", err)
 	}
 	fmt.Println("Number updated")
+	lastFulcrumIP = ipFulcrum
+	updateVectorClock(resp)
 }
 
 func updateName(args string) {
@@ -97,11 +116,13 @@ func updateName(args string) {
 	}
 	defer conn.Close()
 	clientFulcrum := pb.NewFulcrumClient(conn)
-	_, err = clientFulcrum.UpdateName(context.Background(), &pb.UpdateNameRequest{NombrePlaneta: planet, NombreCiudad: old_city_name, NuevoNombre: new_city_name})
+	resp, err := clientFulcrum.UpdateName(context.Background(), &pb.UpdateNameRequest{NombrePlaneta: planet, NombreCiudad: old_city_name, NuevoNombre: new_city_name})
 	if err != nil {
 		log.Fatalf("error contacting fulcrum: %v", err)
 	}
 	fmt.Println("Name updated")
+	lastFulcrumIP = ipFulcrum
+	updateVectorClock(resp)
 }
 
 func deleteCity(args string) {
@@ -117,11 +138,13 @@ func deleteCity(args string) {
 	}
 	defer conn.Close()
 	clientFulcrum := pb.NewFulcrumClient(conn)
-	_, err = clientFulcrum.DeleteCity(context.Background(), &pb.DeleteCityRequest{NombrePlaneta: planet, NombreCiudad: city})
+	resp, err := clientFulcrum.DeleteCity(context.Background(), &pb.DeleteCityRequest{NombrePlaneta: planet, NombreCiudad: city})
 	if err != nil {
 		log.Fatalf("error contacting fulcrum: %v", err)
 	}
 	fmt.Println("City deleted")
+	lastFulcrumIP = ipFulcrum
+	updateVectorClock(resp)
 }
 
 func Menu() {
@@ -132,6 +155,7 @@ func Menu() {
 	line, _ = inputReader.ReadString('\n')
 	line = strings.TrimSuffix(line, "\n")
 	fmt.Printf("line: %s\n", line)
+	lastCommand = line
 	// command is first word
 	command := line[:strings.Index(line, " ")]
 	// args is the rest

@@ -18,11 +18,14 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FulcrumClient interface {
-	AddCity(ctx context.Context, in *AddCityRequest, opts ...grpc.CallOption) (*AddCityResponse, error)
-	DeleteCity(ctx context.Context, in *DeleteCityRequest, opts ...grpc.CallOption) (*DeleteCityResponse, error)
-	UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...grpc.CallOption) (*UpdateNameResponse, error)
-	UpdateNumber(ctx context.Context, in *UpdateNumberRequest, opts ...grpc.CallOption) (*UpdateNumberResponse, error)
+	AddCity(ctx context.Context, in *AddCityRequest, opts ...grpc.CallOption) (*VectorClock, error)
+	DeleteCity(ctx context.Context, in *DeleteCityRequest, opts ...grpc.CallOption) (*VectorClock, error)
+	UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...grpc.CallOption) (*VectorClock, error)
+	UpdateNumber(ctx context.Context, in *UpdateNumberRequest, opts ...grpc.CallOption) (*VectorClock, error)
 	GetNumberRebeldesFulcrum(ctx context.Context, in *GetNumberRebeldesRequest, opts ...grpc.CallOption) (*GetNumberRebeldesResponse, error)
+	// Merge
+	VectorClockMerge(ctx context.Context, in *VectorClock, opts ...grpc.CallOption) (*Empty, error)
+	Merge(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_MergeClient, error)
 }
 
 type fulcrumClient struct {
@@ -33,8 +36,8 @@ func NewFulcrumClient(cc grpc.ClientConnInterface) FulcrumClient {
 	return &fulcrumClient{cc}
 }
 
-func (c *fulcrumClient) AddCity(ctx context.Context, in *AddCityRequest, opts ...grpc.CallOption) (*AddCityResponse, error) {
-	out := new(AddCityResponse)
+func (c *fulcrumClient) AddCity(ctx context.Context, in *AddCityRequest, opts ...grpc.CallOption) (*VectorClock, error) {
+	out := new(VectorClock)
 	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/AddCity", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -42,8 +45,8 @@ func (c *fulcrumClient) AddCity(ctx context.Context, in *AddCityRequest, opts ..
 	return out, nil
 }
 
-func (c *fulcrumClient) DeleteCity(ctx context.Context, in *DeleteCityRequest, opts ...grpc.CallOption) (*DeleteCityResponse, error) {
-	out := new(DeleteCityResponse)
+func (c *fulcrumClient) DeleteCity(ctx context.Context, in *DeleteCityRequest, opts ...grpc.CallOption) (*VectorClock, error) {
+	out := new(VectorClock)
 	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/DeleteCity", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -51,8 +54,8 @@ func (c *fulcrumClient) DeleteCity(ctx context.Context, in *DeleteCityRequest, o
 	return out, nil
 }
 
-func (c *fulcrumClient) UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...grpc.CallOption) (*UpdateNameResponse, error) {
-	out := new(UpdateNameResponse)
+func (c *fulcrumClient) UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...grpc.CallOption) (*VectorClock, error) {
+	out := new(VectorClock)
 	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/UpdateName", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -60,8 +63,8 @@ func (c *fulcrumClient) UpdateName(ctx context.Context, in *UpdateNameRequest, o
 	return out, nil
 }
 
-func (c *fulcrumClient) UpdateNumber(ctx context.Context, in *UpdateNumberRequest, opts ...grpc.CallOption) (*UpdateNumberResponse, error) {
-	out := new(UpdateNumberResponse)
+func (c *fulcrumClient) UpdateNumber(ctx context.Context, in *UpdateNumberRequest, opts ...grpc.CallOption) (*VectorClock, error) {
+	out := new(VectorClock)
 	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/UpdateNumber", in, out, opts...)
 	if err != nil {
 		return nil, err
@@ -78,15 +81,61 @@ func (c *fulcrumClient) GetNumberRebeldesFulcrum(ctx context.Context, in *GetNum
 	return out, nil
 }
 
+func (c *fulcrumClient) VectorClockMerge(ctx context.Context, in *VectorClock, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/VectorClockMerge", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *fulcrumClient) Merge(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_MergeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Fulcrum_ServiceDesc.Streams[0], "/grpc.Fulcrum/Merge", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fulcrumMergeClient{stream}
+	return x, nil
+}
+
+type Fulcrum_MergeClient interface {
+	Send(*MergeRequest) error
+	CloseAndRecv() (*MergeResponse, error)
+	grpc.ClientStream
+}
+
+type fulcrumMergeClient struct {
+	grpc.ClientStream
+}
+
+func (x *fulcrumMergeClient) Send(m *MergeRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *fulcrumMergeClient) CloseAndRecv() (*MergeResponse, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(MergeResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // FulcrumServer is the server API for Fulcrum service.
 // All implementations must embed UnimplementedFulcrumServer
 // for forward compatibility
 type FulcrumServer interface {
-	AddCity(context.Context, *AddCityRequest) (*AddCityResponse, error)
-	DeleteCity(context.Context, *DeleteCityRequest) (*DeleteCityResponse, error)
-	UpdateName(context.Context, *UpdateNameRequest) (*UpdateNameResponse, error)
-	UpdateNumber(context.Context, *UpdateNumberRequest) (*UpdateNumberResponse, error)
+	AddCity(context.Context, *AddCityRequest) (*VectorClock, error)
+	DeleteCity(context.Context, *DeleteCityRequest) (*VectorClock, error)
+	UpdateName(context.Context, *UpdateNameRequest) (*VectorClock, error)
+	UpdateNumber(context.Context, *UpdateNumberRequest) (*VectorClock, error)
 	GetNumberRebeldesFulcrum(context.Context, *GetNumberRebeldesRequest) (*GetNumberRebeldesResponse, error)
+	// Merge
+	VectorClockMerge(context.Context, *VectorClock) (*Empty, error)
+	Merge(Fulcrum_MergeServer) error
 	mustEmbedUnimplementedFulcrumServer()
 }
 
@@ -94,20 +143,26 @@ type FulcrumServer interface {
 type UnimplementedFulcrumServer struct {
 }
 
-func (UnimplementedFulcrumServer) AddCity(context.Context, *AddCityRequest) (*AddCityResponse, error) {
+func (UnimplementedFulcrumServer) AddCity(context.Context, *AddCityRequest) (*VectorClock, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddCity not implemented")
 }
-func (UnimplementedFulcrumServer) DeleteCity(context.Context, *DeleteCityRequest) (*DeleteCityResponse, error) {
+func (UnimplementedFulcrumServer) DeleteCity(context.Context, *DeleteCityRequest) (*VectorClock, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteCity not implemented")
 }
-func (UnimplementedFulcrumServer) UpdateName(context.Context, *UpdateNameRequest) (*UpdateNameResponse, error) {
+func (UnimplementedFulcrumServer) UpdateName(context.Context, *UpdateNameRequest) (*VectorClock, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateName not implemented")
 }
-func (UnimplementedFulcrumServer) UpdateNumber(context.Context, *UpdateNumberRequest) (*UpdateNumberResponse, error) {
+func (UnimplementedFulcrumServer) UpdateNumber(context.Context, *UpdateNumberRequest) (*VectorClock, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method UpdateNumber not implemented")
 }
 func (UnimplementedFulcrumServer) GetNumberRebeldesFulcrum(context.Context, *GetNumberRebeldesRequest) (*GetNumberRebeldesResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetNumberRebeldesFulcrum not implemented")
+}
+func (UnimplementedFulcrumServer) VectorClockMerge(context.Context, *VectorClock) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method VectorClockMerge not implemented")
+}
+func (UnimplementedFulcrumServer) Merge(Fulcrum_MergeServer) error {
+	return status.Errorf(codes.Unimplemented, "method Merge not implemented")
 }
 func (UnimplementedFulcrumServer) mustEmbedUnimplementedFulcrumServer() {}
 
@@ -212,6 +267,50 @@ func _Fulcrum_GetNumberRebeldesFulcrum_Handler(srv interface{}, ctx context.Cont
 	return interceptor(ctx, in, info, handler)
 }
 
+func _Fulcrum_VectorClockMerge_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VectorClock)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FulcrumServer).VectorClockMerge(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.Fulcrum/VectorClockMerge",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FulcrumServer).VectorClockMerge(ctx, req.(*VectorClock))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _Fulcrum_Merge_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FulcrumServer).Merge(&fulcrumMergeServer{stream})
+}
+
+type Fulcrum_MergeServer interface {
+	SendAndClose(*MergeResponse) error
+	Recv() (*MergeRequest, error)
+	grpc.ServerStream
+}
+
+type fulcrumMergeServer struct {
+	grpc.ServerStream
+}
+
+func (x *fulcrumMergeServer) SendAndClose(m *MergeResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *fulcrumMergeServer) Recv() (*MergeRequest, error) {
+	m := new(MergeRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // Fulcrum_ServiceDesc is the grpc.ServiceDesc for Fulcrum service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -239,7 +338,17 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "GetNumberRebeldesFulcrum",
 			Handler:    _Fulcrum_GetNumberRebeldesFulcrum_Handler,
 		},
+		{
+			MethodName: "VectorClockMerge",
+			Handler:    _Fulcrum_VectorClockMerge_Handler,
+		},
 	},
-	Streams:  []grpc.StreamDesc{},
+	Streams: []grpc.StreamDesc{
+		{
+			StreamName:    "Merge",
+			Handler:       _Fulcrum_Merge_Handler,
+			ClientStreams: true,
+		},
+	},
 	Metadata: "fulcrum.proto",
 }

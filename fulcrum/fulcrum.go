@@ -9,6 +9,7 @@ import (
 	"os"
 	"strconv"
 	"strings"
+	"time"
 
 	pb "github.com/axel-arroyo/sd-lab-3/gen/proto"
 	"google.golang.org/grpc"
@@ -17,6 +18,15 @@ import (
 type FulcrumServer struct {
 	pb.UnimplementedFulcrumServer
 }
+
+const (
+	portFulcrum = ":50050"
+)
+
+var (
+	ipFulcrum   = [3]string{"10.6.43.77", "10.6.43.78", "10.6.43.79"}
+	vectorClock = [3]int32{0, 0, 0}
+)
 
 // Registra la informacion de las llamadas a los servicios
 func writeToLog(request string, planeta_afectado string, ciudad_afectada string, nuevo_numero_soldados int32, nuevo_nombre_ciudad string) {
@@ -74,7 +84,6 @@ func addCityToFile(nombre_planeta string, nombre_ciudad string, numero_soldados 
 		log.Fatal(err)
 	}
 	textFile.Close()
-	writeToLog("AddCity", nombre_planeta, nombre_ciudad, numero_soldados, "")
 }
 
 // DeleteCity
@@ -103,7 +112,6 @@ func deleteCity(nombre_planeta string, nombre_ciudad string) {
 		}
 	}
 	filename.Close()
-	writeToLog("DeleteCity", nombre_planeta, nombre_ciudad, 0, "")
 }
 
 // UpdateNumber
@@ -136,7 +144,6 @@ func updateSoldados(nombre_planeta string, nombre_ciudad string, numero_soldados
 		}
 	}
 	filename.Close()
-	writeToLog("UpdateNumber", nombre_planeta, nombre_ciudad, numero_soldados, "")
 }
 
 // UpdateName
@@ -168,28 +175,66 @@ func updateCiudad(nombre_planeta string, nombre_ciudad string, nombre_reemplazo 
 		}
 	}
 	filename.Close()
-	writeToLog("UpdateName", nombre_planeta, nombre_ciudad, 0, nombre_reemplazo)
 }
 
-func (s *FulcrumServer) AddCity(ctx context.Context, req *pb.AddCityRequest) (*pb.AddCityResponse, error) {
+func restartLog() {
+	// Borrar archivo de log
+	os.Remove("fulcrum/log.txt")
+	// Crear archivo de log
+	file, err := os.Create("fulcrum/log.txt")
+	if err != nil {
+		log.Fatal(err)
+	}
+	file.Close()
+}
+
+func planetFileExists(nombre_planeta string) bool {
+	_, err := os.Stat("fulcrum/planets/" + nombre_planeta + ".txt")
+	if errors.Is(err, os.ErrNotExist) {
+		return false
+	}
+	return true
+}
+
+func (s *FulcrumServer) AddCity(ctx context.Context, req *pb.AddCityRequest) (*pb.VectorClock, error) {
 	// AddCity
+	writeToLog("AddCity", req.NombrePlaneta, req.NombreCiudad, req.Soldados, "")
 	addCityToFile(req.NombrePlaneta, req.NombreCiudad, req.Soldados)
-	return &pb.AddCityResponse{}, nil
+	// Update vector clock
+	return &pb.VectorClock{}, nil
 }
 
-func (s *FulcrumServer) DeleteCity(ctx context.Context, req *pb.DeleteCityRequest) (*pb.DeleteCityResponse, error) {
-	deleteCity(req.NombrePlaneta, req.NombreCiudad)
-	return &pb.DeleteCityResponse{}, nil
+func (s *FulcrumServer) DeleteCity(ctx context.Context, req *pb.DeleteCityRequest) (*pb.VectorClock, error) {
+	writeToLog("DeleteCity", req.NombrePlaneta, req.NombreCiudad, 0, "")
+	// Update vector clock
+	if planetFileExists(req.NombrePlaneta) {
+		deleteCity(req.NombrePlaneta, req.NombreCiudad)
+	}
+	return &pb.VectorClock{}, nil
 }
 
-func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameRequest) (*pb.UpdateNameResponse, error) {
-	updateCiudad(req.NombrePlaneta, req.NombreCiudad, req.NuevoNombre)
-	return &pb.UpdateNameResponse{}, nil
+func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameRequest) (*pb.VectorClock, error) {
+	writeToLog("UpdateName", req.NombrePlaneta, req.NombreCiudad, 0, req.NuevoNombre)
+	// Update vector clock
+	if planetFileExists(req.NombrePlaneta) {
+		updateCiudad(req.NombrePlaneta, req.NombreCiudad, req.NuevoNombre)
+	} else {
+		addCityToFile(req.NombrePlaneta, req.NuevoNombre, 0)
+	}
+	// if fulcrum1: X: changes, fulcrum2 --> Y: changes, fulcrum3 --> Z: changes
+	return &pb.VectorClock{}, nil
 }
 
-func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRequest) (*pb.UpdateNumberResponse, error) {
-	updateSoldados(req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero)
-	return &pb.UpdateNumberResponse{}, nil
+func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRequest) (*pb.VectorClock, error) {
+	writeToLog("UpdateNumber", req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero, "")
+	// Update vector clock
+	if planetFileExists(req.NombrePlaneta) {
+		updateSoldados(req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero)
+	} else {
+		addCityToFile(req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero)
+	}
+	// if fulcrum1: X: changes, fulcrum2 --> Y: changes, fulcrum3 --> Z: changes
+	return &pb.VectorClock{}, nil
 }
 
 func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.GetNumberRebeldesRequest) (*pb.GetNumberRebeldesResponse, error) {
@@ -219,13 +264,63 @@ func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.Ge
 	}, nil
 }
 
+func (s *FulcrumServer) VectorClockMerge(ctx context.Context, req *pb.VectorClock) (*pb.Empty, error) {
+	// merge vector clocks
+	switch req.Ip {
+	case ipFulcrum[0]:
+		// merge fulcrum1
+	case ipFulcrum[1]:
+		// merge fulcrum2
+	case ipFulcrum[2]:
+		// merge fulcrum3
+	}
+	return &pb.Empty{}, nil
+}
+
+func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
+	return nil
+}
+
+func mergeRoutine() {
+	// wait two minutes
+	time.Sleep(time.Minute * 2)
+	// send vectorClock to fulcrum1
+	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
+	if err != nil {
+		log.Fatalf("could not connect: %v", err)
+	}
+	defer conn.Close()
+	client := pb.NewFulcrumClient(conn)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	_, err = client.VectorClockMerge(ctx, &pb.VectorClock{X: vectorClock[0], Y: vectorClock[1], Z: vectorClock[2]})
+	if err != nil {
+		log.Fatalf("could not merge: %v", err)
+	}
+	// send all changes to fulcrum1
+	// read log file
+	filename, err := os.OpenFile("fulcrum/log.txt", os.O_RDWR, 0644)
+	if err != nil {
+		log.Fatal(err)
+	}
+	stream, err := client.Merge(ctx)
+	defer filename.Close()
+	scanner := bufio.NewScanner(filename)
+	for scanner.Scan() {
+		line := scanner.Text()
+		// send line to fulcrum1
+		if err := stream.Send(&pb.MergeRequest{Line: line}); err != nil {
+			log.Fatal(err)
+		}
+	}
+	restartLog()
+	// merge again
+	mergeRoutine()
+}
+
 func main() {
 	// Crear archivo log.txt
-	filename, ferr := os.Create("fulcrum/log.txt")
-	if ferr != nil {
-		log.Fatal(ferr)
-	}
-	filename.Close()
+	restartLog()
 	// addCityToFile("Tatooine", "Mos_Eisley", 1000)
 	// updateSoldados("Tatooine", "Mos_Eisley", 2000)
 	// updateCiudad("Tatooine", "Mos_Eisley", "Mos_Eisley_2")

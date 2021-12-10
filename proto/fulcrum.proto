@@ -5,11 +5,21 @@ option go_package = "./proto";
 import "broker.proto";
 
 service Fulcrum{
-    rpc AddCity(AddCityRequest) returns (AddCityResponse);
-    rpc DeleteCity(DeleteCityRequest) returns (DeleteCityResponse);
-    rpc UpdateName(UpdateNameRequest) returns (UpdateNameResponse);
-    rpc UpdateNumber(UpdateNumberRequest) returns (UpdateNumberResponse);
+    rpc AddCity(AddCityRequest) returns (VectorClock);
+    rpc DeleteCity(DeleteCityRequest) returns (VectorClock);
+    rpc UpdateName(UpdateNameRequest) returns (VectorClock);
+    rpc UpdateNumber(UpdateNumberRequest) returns (VectorClock);
     rpc GetNumberRebeldesFulcrum(GetNumberRebeldesRequest) returns (GetNumberRebeldesResponse);
+    // Merge
+    rpc VectorClockMerge(VectorClock) returns (Empty);
+    rpc Merge(stream MergeRequest) returns (VectorClock);
+}
+
+message Empty{
+}
+
+message MergeRequest{
+    string line = 1;
 }
 
 message AddCityRequest{
@@ -18,10 +28,11 @@ message AddCityRequest{
     int32 soldados = 3;
 }
 
-message AddCityResponse{
+message VectorClock{
     int32 x = 1;
     int32 y = 2;
     int32 z = 3;
+    string ip = 4;
 }
 
 message UpdateNameRequest{
