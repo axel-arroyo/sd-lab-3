@@ -20,7 +20,7 @@ const (
 )
 
 var lastCommand string
-var lastVectorClock [3]int
+var lastVectorClock [3]int32
 var lastFulcrumIP string
 
 func getFulcrumIp() string {
@@ -42,11 +42,11 @@ func getFulcrumIp() string {
 func updateVectorClock(resp *pb.VectorClock) {
 	switch lastFulcrumIP {
 	case "10.6.43.77":
-		lastVectorClock[0] = int(resp.X)
+		lastVectorClock[0] = resp.X
 	case "10.6.43.78":
-		lastVectorClock[1] = int(resp.Y)
+		lastVectorClock[1] = resp.Y
 	case "10.6.43.79":
-		lastVectorClock[2] = int(resp.Z)
+		lastVectorClock[2] = resp.Z
 	}
 }
 

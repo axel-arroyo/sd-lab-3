@@ -12,7 +12,7 @@ service Fulcrum{
     rpc GetNumberRebeldesFulcrum(GetNumberRebeldesRequest) returns (GetNumberRebeldesResponse);
     // Merge
     rpc VectorClockMerge(VectorClock) returns (Empty);
-    rpc Merge(stream MergeRequest) returns (VectorClock);
+    rpc Merge(stream MergeRequest) returns (VectorClocks);
 }
 
 message Empty{
@@ -20,6 +20,16 @@ message Empty{
 
 message MergeRequest{
     string line = 1;
+}
+
+message Vector{
+    int32 X = 1;
+    int32 Y = 2;
+    int32 Z = 3;
+}
+
+message VectorClocks{
+    map <string, Vector> vector_clocks = 1;
 }
 
 message AddCityRequest{
@@ -33,6 +43,7 @@ message VectorClock{
     int32 y = 2;
     int32 z = 3;
     string ip = 4;
+    string nombre_planeta = 5;
 }
 
 message UpdateNameRequest{

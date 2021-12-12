@@ -101,7 +101,7 @@ func (c *fulcrumClient) Merge(ctx context.Context, opts ...grpc.CallOption) (Ful
 
 type Fulcrum_MergeClient interface {
 	Send(*MergeRequest) error
-	CloseAndRecv() (*MergeResponse, error)
+	CloseAndRecv() (*VectorClocks, error)
 	grpc.ClientStream
 }
 
@@ -113,11 +113,11 @@ func (x *fulcrumMergeClient) Send(m *MergeRequest) error {
 	return x.ClientStream.SendMsg(m)
 }
 
-func (x *fulcrumMergeClient) CloseAndRecv() (*MergeResponse, error) {
+func (x *fulcrumMergeClient) CloseAndRecv() (*VectorClocks, error) {
 	if err := x.ClientStream.CloseSend(); err != nil {
 		return nil, err
 	}
-	m := new(MergeResponse)
+	m := new(VectorClocks)
 	if err := x.ClientStream.RecvMsg(m); err != nil {
 		return nil, err
 	}
@@ -290,7 +290,7 @@ func _Fulcrum_Merge_Handler(srv interface{}, stream grpc.ServerStream) error {
 }
 
 type Fulcrum_MergeServer interface {
-	SendAndClose(*MergeResponse) error
+	SendAndClose(*VectorClocks) error
 	Recv() (*MergeRequest, error)
 	grpc.ServerStream
 }
@@ -299,7 +299,7 @@ type fulcrumMergeServer struct {
 	grpc.ServerStream
 }
 
-func (x *fulcrumMergeServer) SendAndClose(m *MergeResponse) error {
+func (x *fulcrumMergeServer) SendAndClose(m *VectorClocks) error {
 	return x.ServerStream.SendMsg(m)
 }
 
