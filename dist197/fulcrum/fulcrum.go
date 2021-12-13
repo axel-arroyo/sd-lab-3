@@ -327,6 +327,11 @@ func (s *FulcrumServer) VectorClockMerge(ctx context.Context, req *pb.VectorCloc
 	fmt.Println("VectorClockMerge")
 	fmt.Println(req.X, req.Y, req.Z)
 	planet := req.NombrePlaneta
+	// revise if planet exists in map
+	if _, ok := vectorClocks[planet]; !ok {
+		vectorClocks[planet] = &pb.Vector{X: req.X, Y: req.Y, Z: req.Z}
+		return &pb.Empty{}, nil
+	}
 	switch req.Ip {
 	case ipFulcrum[0]:
 		// merge fulcrum1
