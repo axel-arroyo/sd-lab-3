@@ -67,29 +67,32 @@ func addOneToVectorClock(nombre_planeta string) {
 	}
 }
 
-// Registra la informacion de las llamadas a los servicios
-func writeToLog(request string, planeta_afectado string, ciudad_afectada string, nuevo_numero_soldados int32, nuevo_nombre_ciudad string) {
-	// Crear carpeta del planeta si no existe
-	if !planetFolderExists(planeta_afectado) {
-		os.Mkdir("fulcrum/planets/"+planeta_afectado, 0777)
+func createPlanet(nombre_planeta string) {
+	// create folder for planet
+	if !planetFolderExists(nombre_planeta) {
+		os.Mkdir("fulcrum/planets/"+nombre_planeta, 0777)
 	}
-	// Crear archivo de log y planeta si no existe
-	if !planetFileExists(planeta_afectado) {
-		// Crear archivo del planeta
-		file, err := os.Create("fulcrum/planets/" + planeta_afectado + "/" + planeta_afectado + ".txt")
+	// Create files for planet
+	if !planetFileExists(nombre_planeta) {
+		// create planet file
+		file, err := os.Create("fulcrum/planets/" + nombre_planeta + "/" + nombre_planeta + ".txt")
 		if err != nil {
 			log.Fatal(err)
 		}
 		file.Close()
-		// Crear log del planeta
-		file, err = os.Create("fulcrum/planets/" + planeta_afectado + "/" + planeta_afectado + "_log.txt")
+		// create planet log file
+		file, err = os.Create("fulcrum/planets/" + nombre_planeta + "/" + nombre_planeta + "_log.txt")
 		if err != nil {
 			log.Fatal(err)
 		}
 		file.Close()
 		// initialize vector clock
-		vectorClocks[planeta_afectado] = &pb.Vector{X: 0, Y: 0, Z: 0}
+		vectorClocks[nombre_planeta] = &pb.Vector{X: 0, Y: 0, Z: 0}
 	}
+}
+
+// Registra la informacion de las llamadas a los servicios
+func writeToLog(request string, planeta_afectado string, ciudad_afectada string, nuevo_numero_soldados int32, nuevo_nombre_ciudad string) {
 	// Abrir archivo de log
 	file, ferr := os.OpenFile("fulcrum/planets/"+planeta_afectado+"/"+planeta_afectado+"_log.txt", os.O_APPEND|os.O_WRONLY, 0644)
 	if ferr != nil {
@@ -256,6 +259,7 @@ func restartLog() {
 
 func (s *FulcrumServer) AddCity(ctx context.Context, req *pb.AddCityRequest) (*pb.VectorClock, error) {
 	// AddCity
+	createPlanet(req.NombrePlaneta)
 	writeToLog("AddCity", req.NombrePlaneta, req.NombreCiudad, req.Soldados, "")
 	addCityToFile(req.NombrePlaneta, req.NombreCiudad, req.Soldados)
 	// Update vector clock
@@ -263,6 +267,7 @@ func (s *FulcrumServer) AddCity(ctx context.Context, req *pb.AddCityRequest) (*p
 }
 
 func (s *FulcrumServer) DeleteCity(ctx context.Context, req *pb.DeleteCityRequest) (*pb.VectorClock, error) {
+	createPlanet(req.NombrePlaneta)
 	writeToLog("DeleteCity", req.NombrePlaneta, req.NombreCiudad, 0, "")
 	// Update vector clock
 	if planetFileExists(req.NombrePlaneta) {
@@ -272,6 +277,7 @@ func (s *FulcrumServer) DeleteCity(ctx context.Context, req *pb.DeleteCityReques
 }
 
 func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameRequest) (*pb.VectorClock, error) {
+	createPlanet(req.NombrePlaneta)
 	writeToLog("UpdateName", req.NombrePlaneta, req.NombreCiudad, 0, req.NuevoNombre)
 	// Update vector clock
 	if planetFileExists(req.NombrePlaneta) {
@@ -284,6 +290,7 @@ func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameReques
 }
 
 func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRequest) (*pb.VectorClock, error) {
+	createPlanet(req.NombrePlaneta)
 	writeToLog("UpdateNumber", req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero, "")
 	// Update vector clock
 	if planetFileExists(req.NombrePlaneta) {
@@ -392,6 +399,7 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 	}
 }
 
+// runs at fulcrum2 and fulcrum3
 func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) error {
 	// remove local files
 	os.RemoveAll("fulcrum/planets")
@@ -414,6 +422,8 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 		command := strings.Split(line, " ")[0]
 		planet_name := strings.Split(line, " ")[1]
 		city_name := strings.Split(line, " ")[2]
+		// create planet file if not exists
+		createPlanet(planet_name)
 		// update local files
 		switch command {
 		case "AddCity":
