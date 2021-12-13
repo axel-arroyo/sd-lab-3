@@ -155,7 +155,7 @@ func Menu() {
 	inputReader := bufio.NewReader(os.Stdin)
 	line, _ = inputReader.ReadString('\n')
 	line = strings.TrimSuffix(line, "\n")
-	fmt.Printf("line: %s\n", line)
+	// fmt.Printf("line: %s\n", line)
 	lastCommand = line
 	// command is first word
 	command := line[:strings.Index(line, " ")]
