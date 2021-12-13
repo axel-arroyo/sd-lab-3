@@ -36,6 +36,7 @@ func getFulcrumIp() string {
 		log.Fatalf("Could not get Fulcrum IP: %v", err)
 	}
 	ipFulcrum := resp.IpFulcrum
+	fmt.Println("Fulcrum IP: ", ipFulcrum)
 	return ipFulcrum
 }
 
@@ -160,8 +161,8 @@ func Menu() {
 	command := line[:strings.Index(line, " ")]
 	// args is the rest
 	args := line[strings.Index(line, " ")+1:]
-	fmt.Printf("command: %s\n", command)
-	fmt.Printf("args: %s\n", args)
+	// fmt.Printf("command: %s\n", command)
+	// fmt.Printf("args: %s\n", args)
 	switch command {
 	case "AddCity":
 		addCity(args)
