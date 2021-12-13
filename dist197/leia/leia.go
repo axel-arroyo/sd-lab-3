@@ -44,7 +44,7 @@ func Menu() {
 		if command == "GetNumberRebelds" {
 			GetNumberRebelds(planet, city)
 		} else {
-			fmt.Println("Comando não reconhecido")
+			fmt.Println("Comando no reconocido")
 		}
 		fmt.Scanln(&command, &planet, &city)
 	}
