@@ -290,7 +290,7 @@ func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRe
 
 func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.GetNumberRebeldesRequest) (*pb.GetNumberRebeldesResponse, error) {
 	// read planet file
-	filename, err := os.OpenFile("fulcrum/planets/"+req.NombrePlaneta+".txt", os.O_RDWR, 0644)
+	filename, err := os.OpenFile("fulcrum/planets/"+req.NombrePlaneta+"/"+req.NombrePlaneta+".txt", os.O_RDWR, 0644)
 	if err != nil {
 		return &pb.GetNumberRebeldesResponse{
 			NumeroRebeldes: 0,
@@ -437,12 +437,12 @@ func MergeOtherFulcrums() {
 			client := pb.NewFulcrumClient(conn)
 			// send planet files to other fulcrums
 			for planet, _ := range vectorClocks {
-				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+".txt", os.O_RDWR, 0644)
+				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
 				if err != nil {
 					log.Fatalf("could not open file: %v", err)
 				}
 				defer planet_file.Close()
-				stream, err := client.MergeFulcrums(context.Background())
+				stream, err := client.Merge(context.Background())
 				// read file line by line
 				scanner := bufio.NewScanner(planet_file)
 				for scanner.Scan() {
@@ -485,7 +485,7 @@ func mergeRoutine() {
 			log.Fatalf("could not merge: %v", err)
 		}
 		// read planet log file and send all commands to fulcrum1
-		filename, err := os.OpenFile("fulcrum/planets/"+planet+"_log.txt", os.O_RDWR, 0644)
+		filename, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+"_log.txt", os.O_RDWR, 0644)
 		if err != nil {
 			log.Fatalf("could not open file: %v", err)
 		}
