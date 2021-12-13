@@ -31,6 +31,13 @@ var (
 	vectorClocks = make(map[string]*pb.Vector)
 )
 
+func printVectorClocks() {
+	fmt.Println("VECTOR CLOCKS:")
+	for planeta, vector := range vectorClocks {
+		fmt.Println(planeta, vector.X, vector.Y, vector.Z)
+	}
+}
+
 func planetFolderExists(nombre_planeta string) bool {
 	// Revise if folder exists inside planets folder
 	_, err := os.Stat("fulcrum/planets/" + nombre_planeta)
@@ -317,6 +324,8 @@ func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.Ge
 
 func (s *FulcrumServer) VectorClockMerge(ctx context.Context, req *pb.VectorClock) (*pb.Empty, error) {
 	// merge vector clocks
+	fmt.Println("VectorClockMerge")
+	fmt.Println(req.X, req.Y, req.Z)
 	planet := req.NombrePlaneta
 	switch req.Ip {
 	case ipFulcrum[0]:
@@ -351,6 +360,7 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 			return err
 		}
 		line := req.Line
+		fmt.Println("received", line)
 		// format line
 		command := strings.Split(line, " ")[0]
 		planet_name := strings.Split(line, " ")[1]
@@ -358,12 +368,10 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 		// update local files
 		switch command {
 		case "AddCity":
-			var number int32
+			var number int32 = 0
 			if len(line) == 4 {
 				num, _ := strconv.Atoi(strings.Split(line, " ")[3])
 				number = int32(num)
-			} else {
-				number = 0
 			}
 			addCityToFile(planet_name, city_name, number)
 		case "DeleteCity":
@@ -436,7 +444,7 @@ func MergeOtherFulcrums() {
 			defer conn.Close()
 			client := pb.NewFulcrumClient(conn)
 			// send planet files to other fulcrums
-			for planet, _ := range vectorClocks {
+			for planet := range vectorClocks {
 				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
 				if err != nil {
 					log.Fatalf("could not open file: %v", err)
@@ -470,7 +478,7 @@ func mergeRoutine() {
 	}
 	defer conn.Close()
 	client := pb.NewFulcrumClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	// get vectorClock from vectorClocks map for every planet in the map
 	for planet, vectorClock := range vectorClocks {
@@ -535,7 +543,7 @@ func main() {
 	}
 	grpcServer := grpc.NewServer()
 	pb.RegisterFulcrumServer(grpcServer, &FulcrumServer{})
-	log.Printf("Server listening at 50050")
+	log.Printf("Fulcrum server listening at 50050")
 	err = grpcServer.Serve(lis)
 	if err != nil {
 		log.Fatalf("Failed to serve: %v", err)

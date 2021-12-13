@@ -6,7 +6,7 @@ AddCity Tatooine City3 50
 AddCity Planet2 City4
 AddCity Planet2 City5
 AddCity Planet3 City6 2500
-UpdateName Planet2 CityNewName
+UpdateName Planet2 City4 CityNewName
 UpdateNumber Planet2 City4 1000
 DeleteCity Tatooine City2
 
