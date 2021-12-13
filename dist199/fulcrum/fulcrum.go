@@ -329,9 +329,10 @@ func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.Ge
 	}, nil
 }
 
+// runs at fulcrum1
 func (s *FulcrumServer) VectorClockMerge(ctx context.Context, req *pb.VectorClock) (*pb.Empty, error) {
 	// merge vector clocks
-	fmt.Println("VectorClockMerge")
+	fmt.Println("VectorClockMerge from " + req.Ip + " on planet " + req.NombrePlaneta)
 	fmt.Println(req.X, req.Y, req.Z)
 	planet := req.NombrePlaneta
 	// revise if planet exists in map
@@ -377,6 +378,8 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 		command := strings.Split(line, " ")[0]
 		planet_name := strings.Split(line, " ")[1]
 		city_name := strings.Split(line, " ")[2]
+		// create planet file if it doesn't exist
+		createPlanet(planet_name)
 		// update local files
 		switch command {
 		case "AddCity":
