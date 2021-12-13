@@ -4,6 +4,7 @@ import (
 	"bufio"
 	"context"
 	"errors"
+	"fmt"
 	"io"
 	"log"
 	"net"
@@ -388,6 +389,7 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 		req, err := stream.Recv()
 		if err == io.EOF {
 			// close stream
+			fmt.Println("Merge finished")
 			stream.SendAndClose(&pb.Empty{})
 			return nil
 		}
@@ -460,6 +462,7 @@ func MergeOtherFulcrums() {
 func mergeRoutine() {
 	// wait two minutes
 	time.Sleep(time.Minute * 2)
+	fmt.Println("Merge started")
 	// send vectorClock to fulcrum1
 	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
 	if err != nil {

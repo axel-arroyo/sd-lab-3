@@ -1,3 +1,4 @@
+// Informantes
 AddCity Tatooine Mos_Eisley 8
 UpdateNumber Tatooine Mos_Eisley 100
 AddCity Tatooine City2
@@ -8,3 +9,6 @@ AddCity Planet3 City6 2500
 UpdateName Planet2 CityNewName
 UpdateNumber Planet2 City4 1000
 DeleteCity Tatooine City2
+
+// Leia
+GetNumberRebelds Tatooine Mos_Eisley
