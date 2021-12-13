@@ -13,6 +13,7 @@ service Fulcrum{
     // Merge
     rpc VectorClockMerge(VectorClock) returns (Empty);
     rpc Merge(stream MergeRequest) returns (VectorClocks);
+    rpc MergeFulcrums(stream MergeRequest) returns (Empty);
 }
 
 message Empty{

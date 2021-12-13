@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"errors"
-	"fmt"
 	"io"
 	"log"
 	"net"
@@ -27,9 +26,7 @@ const (
 )
 
 var (
-	ipFulcrum = [3]string{"10.6.43.77", "10.6.43.78", "10.6.43.79"}
-	// vectorClock = [3]int32{0, 0, 0}
-	// vectorClocks    = make(map[string][3]int32)
+	ipFulcrum    = [3]string{"10.6.43.77", "10.6.43.78", "10.6.43.79"}
 	vectorClocks = make(map[string]*pb.Vector)
 )
 
@@ -343,6 +340,9 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
+			// send local planets files to fulcrum2 and fulcrum3
+			go MergeOtherFulcrums()
+			// update vector clock in fulcrum 2 and 3
 			stream.SendAndClose(&pb.VectorClocks{VectorClocks: vectorClocks})
 			return nil
 		}
@@ -378,6 +378,84 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 	}
 }
 
+func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) error {
+	// remove local files
+	os.RemoveAll("fulcrum/planets")
+	// create folder planets
+	os.Mkdir("fulcrum/planets", 0777)
+	// for each line received, update local files
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			// close stream
+			stream.SendAndClose(&pb.Empty{})
+			return nil
+		}
+		if err != nil {
+			return err
+		}
+		line := req.Line
+		// format line
+		command := strings.Split(line, " ")[0]
+		planet_name := strings.Split(line, " ")[1]
+		city_name := strings.Split(line, " ")[2]
+		// update local files
+		switch command {
+		case "AddCity":
+			var number int32
+			if len(line) == 4 {
+				num, _ := strconv.Atoi(strings.Split(line, " ")[3])
+				number = int32(num)
+			} else {
+				number = 0
+			}
+			addCityToFile(planet_name, city_name, number)
+		case "DeleteCity":
+			deleteCity(planet_name, city_name)
+		case "UpdateName":
+			new_name := strings.Split(line, " ")[3]
+			updateCiudad(planet_name, city_name, new_name)
+		case "UpdateNumber":
+			new_number, _ := strconv.Atoi(strings.Split(line, " ")[3])
+			nuevoNumero := int32(new_number)
+			updateSoldados(planet_name, city_name, nuevoNumero)
+		}
+	}
+}
+
+func MergeOtherFulcrums() {
+	for _, ip := range ipFulcrum {
+		if ip != ipFulcrum[0] {
+			// connect to other fulcrums
+			conn, err := grpc.Dial(ip, grpc.WithInsecure())
+			if err != nil {
+				log.Fatalf("did not connect: %v", err)
+			}
+			defer conn.Close()
+			client := pb.NewFulcrumClient(conn)
+			// send planet files to other fulcrums
+			for planet, _ := range vectorClocks {
+				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+".txt", os.O_RDWR, 0644)
+				if err != nil {
+					log.Fatalf("could not open file: %v", err)
+				}
+				defer planet_file.Close()
+				stream, err := client.Merge(context.Background())
+				// read file line by line
+				scanner := bufio.NewScanner(planet_file)
+				for scanner.Scan() {
+					line := scanner.Text()
+					// send line to other fulcrum
+					if err := stream.Send(&pb.MergeRequest{Line: line}); err != nil {
+						log.Fatal(err)
+					}
+				}
+				planet_file.Close()
+			}
+		}
+	}
+}
+
 // Corre en el fulcrum2 y 3, envían el vector clock al fulcrum1 + todos los cambios de cada planeta
 func mergeRoutine() {
 	// wait two minutes
@@ -389,7 +467,7 @@ func mergeRoutine() {
 	}
 	defer conn.Close()
 	client := pb.NewFulcrumClient(conn)
-	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 	// get vectorClock from vectorClocks map for every planet in the map
 	for planet, vectorClock := range vectorClocks {
@@ -428,19 +506,24 @@ func mergeRoutine() {
 }
 
 func main() {
-	// go mergeRoutine()
-	// Crear archivo log.txt
-	restartLog()
-	writeToLog("AddCity", "Tatooine", "Mos_Eisley", 1000, "")
-	addCityToFile("Tatooine", "Mos_Eisley", 1000)
-	writeToLog("AddCity", "Test", "Mos_Eisley", 1000, "")
-	addCityToFile("Test", "Mos_Eisley", 1000)
-	writeToLog("UpdateCity", "Tatooine", "Mos_Eisley", 0, "Rancagua")
-	updateCiudad("Tatooine", "Mos_Eisley", "Rancagua")
-	for planet, vectorClock := range vectorClocks {
-		fmt.Println(planet, vectorClock.X, vectorClock.Y, vectorClock.Z)
+	// initialize mergeRoutine in a goroutine on fulcrum2 and 3
+	if fulcrumNumber > 0 {
+		go mergeRoutine()
 	}
-	// restartLog()
+
+	// automaticly remove local files and create folder planets when the server starts
+	os.RemoveAll("fulcrum/planets")
+	os.Mkdir("fulcrum/planets", 0777)
+
+	// writeToLog("AddCity", "Tatooine", "Mos_Eisley", 1000, "")
+	// addCityToFile("Tatooine", "Mos_Eisley", 1000)
+	// writeToLog("AddCity", "Test", "Mos_Eisley", 1000, "")
+	// addCityToFile("Test", "Mos_Eisley", 1000)
+	// writeToLog("UpdateCity", "Tatooine", "Mos_Eisley", 0, "Rancagua")
+	// updateCiudad("Tatooine", "Mos_Eisley", "Rancagua")
+	// for planet, vectorClock := range vectorClocks {
+	// 	fmt.Println(planet, vectorClock.X, vectorClock.Y, vectorClock.Z)
+	// }
 
 	// Escuchar en el puerto 50050
 	lis, err := net.Listen("tcp", ":50050")

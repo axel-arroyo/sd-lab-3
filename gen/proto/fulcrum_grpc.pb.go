@@ -26,6 +26,7 @@ type FulcrumClient interface {
 	// Merge
 	VectorClockMerge(ctx context.Context, in *VectorClock, opts ...grpc.CallOption) (*Empty, error)
 	Merge(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_MergeClient, error)
+	MergeFulcrums(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_MergeFulcrumsClient, error)
 }
 
 type fulcrumClient struct {
@@ -124,6 +125,40 @@ func (x *fulcrumMergeClient) CloseAndRecv() (*VectorClocks, error) {
 	return m, nil
 }
 
+func (c *fulcrumClient) MergeFulcrums(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_MergeFulcrumsClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Fulcrum_ServiceDesc.Streams[1], "/grpc.Fulcrum/MergeFulcrums", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fulcrumMergeFulcrumsClient{stream}
+	return x, nil
+}
+
+type Fulcrum_MergeFulcrumsClient interface {
+	Send(*MergeRequest) error
+	CloseAndRecv() (*Empty, error)
+	grpc.ClientStream
+}
+
+type fulcrumMergeFulcrumsClient struct {
+	grpc.ClientStream
+}
+
+func (x *fulcrumMergeFulcrumsClient) Send(m *MergeRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *fulcrumMergeFulcrumsClient) CloseAndRecv() (*Empty, error) {
+	if err := x.ClientStream.CloseSend(); err != nil {
+		return nil, err
+	}
+	m := new(Empty)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // FulcrumServer is the server API for Fulcrum service.
 // All implementations must embed UnimplementedFulcrumServer
 // for forward compatibility
@@ -136,6 +171,7 @@ type FulcrumServer interface {
 	// Merge
 	VectorClockMerge(context.Context, *VectorClock) (*Empty, error)
 	Merge(Fulcrum_MergeServer) error
+	MergeFulcrums(Fulcrum_MergeFulcrumsServer) error
 	mustEmbedUnimplementedFulcrumServer()
 }
 
@@ -163,6 +199,9 @@ func (UnimplementedFulcrumServer) VectorClockMerge(context.Context, *VectorClock
 }
 func (UnimplementedFulcrumServer) Merge(Fulcrum_MergeServer) error {
 	return status.Errorf(codes.Unimplemented, "method Merge not implemented")
+}
+func (UnimplementedFulcrumServer) MergeFulcrums(Fulcrum_MergeFulcrumsServer) error {
+	return status.Errorf(codes.Unimplemented, "method MergeFulcrums not implemented")
 }
 func (UnimplementedFulcrumServer) mustEmbedUnimplementedFulcrumServer() {}
 
@@ -311,6 +350,32 @@ func (x *fulcrumMergeServer) Recv() (*MergeRequest, error) {
 	return m, nil
 }
 
+func _Fulcrum_MergeFulcrums_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FulcrumServer).MergeFulcrums(&fulcrumMergeFulcrumsServer{stream})
+}
+
+type Fulcrum_MergeFulcrumsServer interface {
+	SendAndClose(*Empty) error
+	Recv() (*MergeRequest, error)
+	grpc.ServerStream
+}
+
+type fulcrumMergeFulcrumsServer struct {
+	grpc.ServerStream
+}
+
+func (x *fulcrumMergeFulcrumsServer) SendAndClose(m *Empty) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *fulcrumMergeFulcrumsServer) Recv() (*MergeRequest, error) {
+	m := new(MergeRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
 // Fulcrum_ServiceDesc is the grpc.ServiceDesc for Fulcrum service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -347,6 +412,11 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "Merge",
 			Handler:       _Fulcrum_Merge_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "MergeFulcrums",
+			Handler:       _Fulcrum_MergeFulcrums_Handler,
 			ClientStreams: true,
 		},
 	},
