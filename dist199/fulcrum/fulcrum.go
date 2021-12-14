@@ -276,6 +276,8 @@ func (s *FulcrumServer) DeleteCity(ctx context.Context, req *pb.DeleteCityReques
 	return &pb.VectorClock{}, nil
 }
 
+// Falta ver que funcione cuando no existe una ciudad/planeta
+// Pasa lo mismo que con updateNumber
 func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameRequest) (*pb.VectorClock, error) {
 	createPlanet(req.NombrePlaneta)
 	writeToLog("UpdateName", req.NombrePlaneta, req.NombreCiudad, 0, req.NuevoNombre)
@@ -289,10 +291,12 @@ func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameReques
 	return &pb.VectorClock{}, nil
 }
 
+// Falta ver que funcione cuando no existe una ciudad/planeta
 func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRequest) (*pb.VectorClock, error) {
 	createPlanet(req.NombrePlaneta)
 	writeToLog("UpdateNumber", req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero, "")
 	// Update vector clock
+	// Con createPlanet siempre existe el file, hay que cambiar esto
 	if planetFileExists(req.NombrePlaneta) {
 		updateSoldados(req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero)
 	} else {
@@ -403,7 +407,7 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 	}
 }
 
-// runs at fulcrum2 and fulcrum3
+// runs at fulcrum2 and fulcrum3, receives planet files from fulcrum1
 func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) error {
 	// remove local files
 	os.RemoveAll("fulcrum/planets")
@@ -439,6 +443,7 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 	}
 }
 
+// sends local files to fulcrum2 and fulcrum3
 func MergeOtherFulcrums() {
 	for _, ip := range ipFulcrum {
 		if ip != ipFulcrum[0] {
@@ -449,7 +454,7 @@ func MergeOtherFulcrums() {
 			}
 			defer conn.Close()
 			client := pb.NewFulcrumClient(conn)
-			stream, err := client.Merge(context.Background())
+			stream, err := client.MergeFulcrums(context.Background())
 			// send planet files to other fulcrums
 			for planet := range vectorClocks {
 				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
@@ -522,6 +527,12 @@ func mergeRoutine() {
 	}
 	// close send stream
 	stream.CloseSend()
+	// update vector clock from response
+	resp, err := stream.CloseAndRecv()
+	if err != nil {
+		log.Fatalf("Error receiving response: %v", err)
+	}
+	vectorClocks = resp.VectorClocks
 	// restart all logs
 	restartLog()
 	// merge again
