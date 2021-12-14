@@ -363,6 +363,7 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
+			fmt.Println("EOF")
 			// send local planets files to fulcrum2 and fulcrum3
 			go MergeOtherFulcrums()
 			// update vector clock in fulcrum 2 and 3
@@ -478,6 +479,9 @@ func MergeOtherFulcrums() {
 						log.Fatal(err)
 					}
 				}
+				// close send stream
+				stream.CloseSend()
+				// close file
 				planet_file.Close()
 			}
 		}
@@ -526,6 +530,10 @@ func mergeRoutine() {
 				log.Fatal(err)
 			}
 		}
+		// close send stream
+		stream.CloseSend()
+		// close file
+		filename.Close()
 	}
 
 	// restart all logs
