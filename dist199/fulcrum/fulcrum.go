@@ -463,7 +463,7 @@ func MergeOtherFulcrums() {
 			stream, err := client.MergeFulcrums(context.Background())
 			// send planet files to other fulcrums
 			for planet := range vectorClocks {
-				fmt.Println("Opening file " + planet)
+				fmt.Println("Opening file fulcrum/planets/" + planet + "/" + planet + ".txt")
 				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
 				if err != nil {
 					log.Fatalf("could not open file: %v", err)
@@ -474,7 +474,7 @@ func MergeOtherFulcrums() {
 				for scanner.Scan() {
 					line := scanner.Text()
 					fmt.Println("Sending line " + line)
-					// send line to other fulcrum
+					// send line to fulcrum 2 and 3
 					if err := stream.Send(&pb.MergeRequest{Line: line}); err != nil {
 						log.Fatal(err)
 					}
@@ -517,6 +517,7 @@ func mergeRoutine() {
 			log.Fatalf("could not merge: %v", err)
 		}
 		// read planet log file and send all commands to fulcrum1
+		fmt.Println("Opening file fulcrum/planets/" + planet + "/" + planet + "_log.txt")
 		filename, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+"_log.txt", os.O_RDWR, 0644)
 		if err != nil {
 			log.Fatalf("could not open file: %v", err)
@@ -526,6 +527,7 @@ func mergeRoutine() {
 		// for each line in log file
 		for scanner.Scan() {
 			line := scanner.Text()
+			fmt.Println("Sending line " + line)
 			// send line to fulcrum1
 			if err := stream.Send(&pb.MergeRequest{Line: line}); err != nil {
 				log.Fatal(err)
