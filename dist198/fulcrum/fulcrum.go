@@ -456,12 +456,13 @@ func MergeOtherFulcrums() {
 	for _, ip := range ipFulcrum {
 		if ip != ipFulcrum[0] {
 			// connect to other fulcrums
-			conn, err := grpc.Dial(ip, grpc.WithInsecure())
+			conn, err := grpc.Dial(ip+portFulcrum, grpc.WithInsecure())
 			if err != nil {
 				log.Fatalf("did not connect: %v", err)
 			}
 			defer conn.Close()
 			client := pb.NewFulcrumClient(conn)
+			stream, err := client.Merge(context.Background())
 			// send planet files to other fulcrums
 			for planet := range vectorClocks {
 				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
@@ -469,7 +470,6 @@ func MergeOtherFulcrums() {
 					log.Fatalf("could not open file: %v", err)
 				}
 				defer planet_file.Close()
-				stream, err := client.Merge(context.Background())
 				// read file line by line
 				scanner := bufio.NewScanner(planet_file)
 				for scanner.Scan() {
@@ -479,11 +479,11 @@ func MergeOtherFulcrums() {
 						log.Fatal(err)
 					}
 				}
-				// close send stream
-				stream.CloseSend()
 				// close file
 				planet_file.Close()
 			}
+			// close send stream
+			stream.CloseSend()
 		}
 	}
 }
@@ -503,6 +503,7 @@ func mergeRoutine() {
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
 	// get vectorClock from vectorClocks map for every planet in the map
+	stream, err := client.Merge(ctx)
 	for planet, vectorClock := range vectorClocks {
 		// send vectorClock to fulcrum1
 		_, err := client.VectorClockMerge(ctx, &pb.VectorClock{
@@ -519,7 +520,6 @@ func mergeRoutine() {
 		if err != nil {
 			log.Fatalf("could not open file: %v", err)
 		}
-		stream, err := client.Merge(ctx)
 		defer filename.Close()
 		scanner := bufio.NewScanner(filename)
 		// for each line in log file
@@ -530,12 +530,11 @@ func mergeRoutine() {
 				log.Fatal(err)
 			}
 		}
-		// close send stream
-		stream.CloseSend()
 		// close file
 		filename.Close()
 	}
-
+	// close send stream
+	stream.CloseSend()
 	// restart all logs
 	restartLog()
 	// merge again
