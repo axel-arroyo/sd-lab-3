@@ -536,6 +536,8 @@ func mergeRoutine() {
 		// close file
 		filename.Close()
 	}
+	restartLog()
+	fmt.Println("Finished sending lines, waiting for response")
 	// close send stream
 	stream.CloseSend()
 	// update vector clock from response
@@ -545,7 +547,6 @@ func mergeRoutine() {
 	}
 	vectorClocks = resp.VectorClocks
 	// restart all logs
-	restartLog()
 	fmt.Println("Merge finished")
 	// merge again
 	mergeRoutine()
