@@ -502,6 +502,7 @@ func mergeRoutine() {
 	stream, err := client.Merge(ctx)
 	for planet, vectorClock := range vectorClocks {
 		// send vectorClock to fulcrum1
+		fmt.Println("sending " + planet + "vectorClock")
 		_, err := client.VectorClockMerge(ctx, &pb.VectorClock{
 			X:             vectorClock.X,
 			Y:             vectorClock.Y,
