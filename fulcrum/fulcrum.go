@@ -374,6 +374,7 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 			go MergeOtherFulcrums()
 			// update vector clock in fulcrum 2 and 3
 			stream.SendAndClose(&pb.VectorClocks{VectorClocks: vectorClocks})
+			fmt.Println("Sent vector clocks to connected fulcrum")
 			return nil
 		}
 		if err != nil {
@@ -449,6 +450,7 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 
 // sends local files to fulcrum2 and fulcrum3
 func MergeOtherFulcrums() {
+	fmt.Println("MergeOtherFulcrums")
 	for _, ip := range ipFulcrum {
 		if ip != ipFulcrum[0] {
 			// connect to other fulcrums
@@ -461,6 +463,7 @@ func MergeOtherFulcrums() {
 			stream, err := client.MergeFulcrums(context.Background())
 			// send planet files to other fulcrums
 			for planet := range vectorClocks {
+				fmt.Println("Opening file " + planet)
 				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
 				if err != nil {
 					log.Fatalf("could not open file: %v", err)
@@ -470,6 +473,7 @@ func MergeOtherFulcrums() {
 				scanner := bufio.NewScanner(planet_file)
 				for scanner.Scan() {
 					line := scanner.Text()
+					fmt.Println("Sending line " + line)
 					// send line to other fulcrum
 					if err := stream.Send(&pb.MergeRequest{Line: line}); err != nil {
 						log.Fatal(err)
@@ -502,7 +506,7 @@ func mergeRoutine() {
 	stream, err := client.Merge(ctx)
 	for planet, vectorClock := range vectorClocks {
 		// send vectorClock to fulcrum1
-		fmt.Println("sending " + planet + "vectorClock")
+		fmt.Println("sending " + planet + " vectorClock")
 		_, err := client.VectorClockMerge(ctx, &pb.VectorClock{
 			X:             vectorClock.X,
 			Y:             vectorClock.Y,
