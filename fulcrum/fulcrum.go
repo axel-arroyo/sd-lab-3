@@ -70,10 +70,12 @@ func addOneToVectorClock(nombre_planeta string) {
 func createPlanet(nombre_planeta string) {
 	// create folder for planet
 	if !planetFolderExists(nombre_planeta) {
+		fmt.Println("Creating folder for planet: ", nombre_planeta)
 		os.Mkdir("fulcrum/planets/"+nombre_planeta, 0777)
 	}
 	// Create files for planet
 	if !planetFileExists(nombre_planeta) {
+		fmt.Println("Creating files for planet: ", nombre_planeta)
 		// create planet file
 		file, err := os.Create("fulcrum/planets/" + nombre_planeta + "/" + nombre_planeta + ".txt")
 		if err != nil {
@@ -414,6 +416,7 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 	// create folder planets
 	os.Mkdir("fulcrum/planets", 0777)
 	// for each line received, update local files
+	fmt.Println("MergeFulcrums")
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
@@ -426,6 +429,7 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 			return err
 		}
 		line := req.Line
+		fmt.Println("received", line)
 		// create file
 		planet_name := strings.Split(line, " ")[0]
 		createPlanet(planet_name)
@@ -535,6 +539,7 @@ func mergeRoutine() {
 	vectorClocks = resp.VectorClocks
 	// restart all logs
 	restartLog()
+	fmt.Println("Merge finished")
 	// merge again
 	mergeRoutine()
 }
