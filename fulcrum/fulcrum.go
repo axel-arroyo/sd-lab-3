@@ -422,32 +422,19 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 			return err
 		}
 		line := req.Line
-		// format line
-		command := strings.Split(line, " ")[0]
-		planet_name := strings.Split(line, " ")[1]
-		city_name := strings.Split(line, " ")[2]
-		// create planet file if not exists
+		// create file
+		planet_name := strings.Split(line, " ")[0]
 		createPlanet(planet_name)
-		// update local files
-		switch command {
-		case "AddCity":
-			var number int32
-			if len(line) == 4 {
-				num, _ := strconv.Atoi(strings.Split(line, " ")[3])
-				number = int32(num)
-			} else {
-				number = 0
-			}
-			addCityToFile(planet_name, city_name, number)
-		case "DeleteCity":
-			deleteCity(planet_name, city_name)
-		case "UpdateName":
-			new_name := strings.Split(line, " ")[3]
-			updateCiudad(planet_name, city_name, new_name)
-		case "UpdateNumber":
-			new_number, _ := strconv.Atoi(strings.Split(line, " ")[3])
-			nuevoNumero := int32(new_number)
-			updateSoldados(planet_name, city_name, nuevoNumero)
+		// write line
+		file, err := os.OpenFile("fulcrum/planets/"+planet_name+"/"+planet_name+".txt", os.O_RDWR, 0644)
+		if err != nil {
+			return err
+		}
+		defer file.Close()
+		// write line
+		_, err = file.WriteString(line + "\n")
+		if err != nil {
+			return err
 		}
 	}
 }
