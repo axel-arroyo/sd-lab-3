@@ -529,7 +529,7 @@ func MergeOtherFulcrums() {
 // Corre en el fulcrum2 y 3, envían el vector clock al fulcrum1 + todos los cambios de cada planeta
 func mergeRoutine() {
 	// wait two minutes
-	time.Sleep(time.Second * 30)
+	time.Sleep(time.Minute * 2)
 	// lock mutex to avoid deleting/receiving files while sending changes to fulcrum1
 	fmt.Println("Sending files to fulcrum1")
 	// send vectorClock to fulcrum1

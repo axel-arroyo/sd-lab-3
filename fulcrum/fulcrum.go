@@ -500,6 +500,14 @@ func (s *FulcrumServer) BidirectionalMerge(stream pb.Fulcrum_BidirectionalMergeS
 // runs at fulcrum1
 func (s *FulcrumServer) ClockMerge(ctx context.Context, req *pb.VectorClocks) (*pb.VectorClocks, error) {
 	// merge vector clocks
+	receivedVectorClocks := req.VectorClocks
+	for planet, vectorClock := range receivedVectorClocks {
+		// if vector clock is not in local vector clock, add it
+		if _, ok := vectorClocks[planet]; !ok {
+			vectorClocks[planet] = vectorClock
+		} else {
+			// if vector clock is in local vector clock, merge it
+		}
 	return nil, nil
 }
 
