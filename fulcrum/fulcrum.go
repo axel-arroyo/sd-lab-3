@@ -90,8 +90,10 @@ func createPlanet(nombre_planeta string) {
 			log.Fatal(err)
 		}
 		file.Close()
-		// initialize vector clock
-		vectorClocks[nombre_planeta] = &pb.Vector{X: 0, Y: 0, Z: 0}
+		// initialize vector clock if this doesnt exists
+		if _, ok := vectorClocks[nombre_planeta]; !ok {
+			vectorClocks[nombre_planeta] = &pb.Vector{X: 0, Y: 0, Z: 0}
+		}
 	}
 }
 
