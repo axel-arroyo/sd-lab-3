@@ -449,12 +449,12 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 	// create folder planets
 	os.Mkdir("fulcrum/planets", 0777)
 	// for each line received, update local files
-	fmt.Println("MergeFulcrums")
+	fmt.Println("Receiving files from fulcrum1")
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
 			// close stream
-			fmt.Println("Merge finished")
+			fmt.Println("Finished receiving files from fulcrum1")
 			stream.SendAndClose(&pb.Empty{})
 			canReceive = false
 			// unlock mutex
@@ -488,6 +488,7 @@ func MergeOtherFulcrums() {
 	fmt.Println("MergeOtherFulcrums")
 	for _, ip := range ipFulcrum {
 		if ip != ipFulcrum[0] {
+			fmt.Println("Sending to " + ip)
 			// connect to other fulcrums
 			conn, err := grpc.Dial(ip+portFulcrum, grpc.WithInsecure())
 			if err != nil {
@@ -528,7 +529,7 @@ func mergeRoutine() {
 	// wait two minutes
 	time.Sleep(time.Second * 30)
 	// lock mutex to avoid deleting/receiving files while sending changes to fulcrum1
-	fmt.Println("Merge started")
+	fmt.Println("Sending files to fulcrum1")
 	// send vectorClock to fulcrum1
 	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
 	if err != nil {
@@ -573,6 +574,7 @@ func mergeRoutine() {
 		filename.Close()
 	}
 	// fulcrum1 already knows all local changes
+	fmt.Println("Finished sending local changes to fulcrum1")
 	canReceive = true
 	restartLog()
 	// close send stream

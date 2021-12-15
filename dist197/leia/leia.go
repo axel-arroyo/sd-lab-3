@@ -49,7 +49,7 @@ func GetNumberRebelds(planet string, city string) {
 	// update local vector clock to consistency (value of map is X, Y, Z from vector clock and number as last index)
 	lastReceived := resp
 	compareMostRecentVectorClock(lastReceived, city)
-	fmt.Printf("Numero de rebeldes: %d\n", lastVectorClock[city].NumeroRebeldes)
+	fmt.Printf("Numero de rebeldes: %d --- VectorClock: %d %d %d --- Ip: %s\n", lastVectorClock[city].NumeroRebeldes, lastVectorClock[city].X, lastVectorClock[city].Y, lastVectorClock[city].Z, lastVectorClock[city].Ip)
 	return
 }
 
