@@ -449,7 +449,7 @@ func (s *FulcrumServer) ClockMerge(ctx context.Context, req *pb.VectorClocks) (*
 
 func MergeRoutine() {
 	// wait two minutes
-	time.Sleep(time.Minute * 2)
+	time.Sleep(time.Second * 20)
 	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
@@ -478,6 +478,10 @@ func MergeRoutine() {
 		}
 		// close file
 		filename.Close()
+	}
+	// send close
+	if err := stream.CloseSend(); err != nil {
+		log.Fatal(err)
 	}
 	// delete files
 	os.RemoveAll("fulcrum/planets")
