@@ -517,6 +517,8 @@ func MergeOtherFulcrums() {
 func mergeRoutine() {
 	// wait two minutes
 	time.Sleep(time.Second * 30)
+	// lock mutex to avoid deleting/receiving files while sending changes to fulcrum1
+	mutex.Lock()
 	fmt.Println("Merge started")
 	// send vectorClock to fulcrum1
 	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
@@ -561,8 +563,9 @@ func mergeRoutine() {
 		// close file
 		filename.Close()
 	}
+	// fulcrum1 already knows all local changes
+	mutex.Unlock()
 	restartLog()
-	fmt.Println("Finished sending lines, waiting for response")
 	// close send stream
 	stream.CloseSend()
 	// update vector clock from response
@@ -571,8 +574,6 @@ func mergeRoutine() {
 		log.Fatalf("Error receiving response: %v", err)
 	}
 	vectorClocks = resp.VectorClocks
-	// restart all logs
-	fmt.Println("Merge finished")
 	// merge again
 	mergeRoutine()
 }
