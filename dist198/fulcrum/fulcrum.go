@@ -521,7 +521,7 @@ func MergeOtherFulcrums() {
 			}
 			// close send stream
 			fmt.Println("Closed stream")
-			stream.CloseSend()
+			_, err = stream.CloseAndRecv()
 		}
 	}
 }
@@ -580,7 +580,7 @@ func mergeRoutine() {
 	canReceive = true
 	restartLog()
 	// close send stream
-	stream.CloseSend()
+	_, err = stream.CloseAndRecv()
 	// update vector clock from response
 	resp, err := stream.CloseAndRecv()
 	if err != nil {
