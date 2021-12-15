@@ -18,6 +18,7 @@ UpdateName Tierra Machali Caca
 UpdateNumber Tierra Valdivia 100
 
 UpdateNumber Tierra Valdivia 100000
+DeleteCity Tierra Valdivia
 
 // Leia
 GetNumberRebelds Tatooine Mos_Eisley

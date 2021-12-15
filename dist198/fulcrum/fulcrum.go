@@ -446,7 +446,7 @@ func (s *FulcrumServer) ClockMerge(ctx context.Context, req *pb.VectorClocks) (*
 
 func MergeRoutine() {
 	// wait two minutes
-	time.Sleep(time.Second * 20)
+	time.Sleep(time.Minute * 2)
 	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
