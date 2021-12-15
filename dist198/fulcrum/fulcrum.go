@@ -359,46 +359,34 @@ func (s *FulcrumServer) IsAvailable(ctx context.Context, req *pb.Empty) (*pb.Emp
 	return &pb.Empty{}, nil
 }
 
-// runs at fulcrum1
-func (s *FulcrumServer) VectorClockMerge(ctx context.Context, req *pb.VectorClock) (*pb.Empty, error) {
-	// merge vector clocks
-	fmt.Println("VectorClockMerge from " + req.Ip + " on planet " + req.NombrePlaneta)
-	fmt.Println(req.X, req.Y, req.Z)
-	planet := req.NombrePlaneta
-	// revise if planet exists in map
-	if _, ok := vectorClocks[planet]; !ok {
-		vectorClocks[planet] = &pb.Vector{X: req.X, Y: req.Y, Z: req.Z}
-		return &pb.Empty{}, nil
-	}
-	switch req.Ip {
-	case ipFulcrum[0]:
-		// merge fulcrum1
-	case ipFulcrum[1]:
-		// update Y value of vector clock to the max value of Y
-		if vectorClocks[planet].Y < req.Y {
-			vectorClocks[planet].Y = req.Y
-		}
-	case ipFulcrum[2]:
-		// update Z value of vector clock to the max value of Z
-		if vectorClocks[planet].Z < req.Z {
-			vectorClocks[planet].Z = req.Z
-		}
-	}
-	return &pb.Empty{}, nil
-}
-
 // Corre en el fulcrum1, envía los cambios totales a fulcrum2 y fulcrum3, además de actualizar su vector clock
-func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
-	// for each line received, update local files and return vectorClock
+func (s *FulcrumServer) BidirectionalMerge(stream pb.Fulcrum_BidirectionalMergeServer) error {
+	// for each line received, update local files
 	for {
 		req, err := stream.Recv()
 		if err == io.EOF {
-			fmt.Println("EOF")
-			// send local planets files to fulcrum2 and fulcrum3
-			go MergeOtherFulcrums()
-			// update vector clock in fulcrum 2 and 3
-			stream.SendAndClose(&pb.VectorClocks{VectorClocks: vectorClocks})
-			fmt.Println("Sent vector clocks to connected fulcrum")
+			// send local files to connected fulcrum
+			for planet := range vectorClocks {
+				// read planet file and send all lines to fulcrum2 and fulcrum3
+				fmt.Println("Opening file fulcrum/planets/" + planet + "/" + planet + ".txt")
+				filename, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
+				if err != nil {
+					log.Fatalf("could not open file: %v", err)
+				}
+				defer filename.Close()
+				scanner := bufio.NewScanner(filename)
+				// for each line in planet file
+				for scanner.Scan() {
+					line := scanner.Text()
+					fmt.Println("Sending line " + line)
+					// send line to connected fulcrum
+					if err := stream.Send(&pb.MergeResponse{Line: line}); err != nil {
+						log.Fatal(err)
+					}
+				}
+				// close file
+				filename.Close()
+			}
 			return nil
 		}
 		if err != nil {
@@ -434,105 +422,34 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 	}
 }
 
-// runs at fulcrum2 and fulcrum3, receives planet files from fulcrum1
-func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) error {
-	// wait till local files are sent to fulcrum1
-	for {
-		if canReceive {
-			break
+func (s *FulcrumServer) ClockMerge(ctx context.Context, req *pb.VectorClocks) (*pb.VectorClocks, error) {
+	// merge vector clocks
+	receivedVectorClocks := req.VectorClocks
+	for planet, vectorClock := range receivedVectorClocks {
+		// if vector clock is not in local vector clock, add it
+		if _, ok := vectorClocks[planet]; !ok {
+			vectorClocks[planet] = vectorClock
+		} else {
+			// if vector clock is in local vector clock, merge it
+			newVectorClock := vectorClocks[planet]
+			if vectorClock.X > newVectorClock.X {
+				newVectorClock.X = vectorClock.X
+			}
+			if vectorClock.Y > newVectorClock.Y {
+				newVectorClock.Y = vectorClock.Y
+			}
+			if vectorClock.Z > newVectorClock.Z {
+				newVectorClock.Z = vectorClock.Z
+			}
+			vectorClocks[planet] = newVectorClock
 		}
 	}
-	// lock mutex untill all files are received in other goroutine
-	mutex.Lock()
-	// remove local files
-	os.RemoveAll("fulcrum/planets")
-	// create folder planets
-	os.Mkdir("fulcrum/planets", 0777)
-	// for each line received, update local files
-	// fmt.Println("Receiving files from fulcrum1")
-	for {
-		fmt.Println("Starting to receive files")
-		req, err := stream.Recv()
-		if err == io.EOF {
-			// close stream
-			fmt.Println("Finished receiving files from fulcrum1")
-			stream.SendAndClose(&pb.Empty{})
-			canReceive = false
-			// unlock mutex
-			mutex.Unlock()
-			return nil
-		}
-		if err != nil {
-			return err
-		}
-		line := req.Line
-		fmt.Println("received", line)
-		// create file
-		planet_name := strings.Split(line, " ")[0]
-		createPlanet(planet_name)
-		// write line
-		file, err := os.OpenFile("fulcrum/planets/"+planet_name+"/"+planet_name+".txt", os.O_RDWR, 0644)
-		if err != nil {
-			return err
-		}
-		defer file.Close()
-		// write line
-		_, err = file.WriteString(line + "\n")
-		if err != nil {
-			return err
-		}
-	}
+	return &pb.VectorClocks{VectorClocks: vectorClocks}, nil
 }
 
-// sends local files to fulcrum2 and fulcrum3
-func MergeOtherFulcrums() {
-	fmt.Println("MergeOtherFulcrums")
-	for _, ip := range ipFulcrum {
-		if ip != ipFulcrum[0] {
-			fmt.Println("Sending to " + ip)
-			// connect to other fulcrums
-			conn, err := grpc.Dial(ip+portFulcrum, grpc.WithInsecure())
-			if err != nil {
-				log.Fatalf("did not connect: %v", err)
-			}
-			defer conn.Close()
-			client := pb.NewFulcrumClient(conn)
-			stream, err := client.MergeFulcrums(context.Background())
-			// send planet files to other fulcrums
-			for planet := range vectorClocks {
-				fmt.Println("Opening file fulcrum/planets/" + planet + "/" + planet + ".txt")
-				planet_file, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
-				if err != nil {
-					log.Fatalf("could not open file: %v", err)
-				}
-				defer planet_file.Close()
-				// read file line by line
-				scanner := bufio.NewScanner(planet_file)
-				for scanner.Scan() {
-					line := scanner.Text()
-					fmt.Println("Sending line " + line)
-					// send line to fulcrum 2 and 3
-					if err := stream.Send(&pb.MergeRequest{Line: line}); err != nil {
-						log.Fatal(err)
-					}
-				}
-				// close file
-				planet_file.Close()
-			}
-			// close send stream
-			fmt.Println("Closed stream")
-			stream.CloseSend()
-		}
-	}
-}
-
-// Corre en el fulcrum2 y 3, envían el vector clock al fulcrum1 + todos los cambios de cada planeta
-func mergeRoutine() {
+func MergeRoutine() {
 	// wait two minutes
 	time.Sleep(time.Minute * 2)
-	// lock mutex to avoid deleting/receiving files while sending changes to fulcrum1
-	fmt.Println("Sending files to fulcrum1")
-	// send vectorClock to fulcrum1
 	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
 	if err != nil {
 		log.Fatalf("could not connect: %v", err)
@@ -541,22 +458,9 @@ func mergeRoutine() {
 	client := pb.NewFulcrumClient(conn)
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	// get vectorClock from vectorClocks map for every planet in the map
-	stream, err := client.Merge(ctx)
-	for planet, vectorClock := range vectorClocks {
-		// send vectorClock to fulcrum1
-		fmt.Println("sending " + planet + " vectorClock")
-		_, err := client.VectorClockMerge(ctx, &pb.VectorClock{
-			X:             vectorClock.X,
-			Y:             vectorClock.Y,
-			Z:             vectorClock.Z,
-			Ip:            ipFulcrum[fulcrumNumber],
-			NombrePlaneta: planet})
-		if err != nil {
-			log.Fatalf("could not merge: %v", err)
-		}
+	stream, err := client.BidirectionalMerge(ctx)
+	for planet, _ := range vectorClocks {
 		// read planet log file and send all commands to fulcrum1
-		fmt.Println("Opening file fulcrum/planets/" + planet + "/" + planet + "_log.txt")
 		filename, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+"_log.txt", os.O_RDWR, 0644)
 		if err != nil {
 			log.Fatalf("could not open file: %v", err)
@@ -575,26 +479,46 @@ func mergeRoutine() {
 		// close file
 		filename.Close()
 	}
-	// fulcrum1 already knows all local changes
-	fmt.Println("Finished sending local changes to fulcrum1")
-	canReceive = true
-	restartLog()
-	// close send stream
-	stream.CloseSend()
-	// update vector clock from response
-	resp, err := stream.CloseAndRecv()
+	// delete files
+	os.RemoveAll("fulcrum/planets")
+	os.Mkdir("fulcrum/planets", 0777)
+	// receive files from fulcrum1
+	for {
+		req, err := stream.Recv()
+		if err == io.EOF {
+			break
+		}
+		if err != nil {
+			return
+		}
+		line := req.Line
+		planet := strings.Split(line, " ")[0]
+		fmt.Println("received", line)
+		createPlanet(planet)
+		// write to planet file the line
+		planetFile, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR|os.O_APPEND, 0644)
+		if err != nil {
+			log.Fatalf("could not open file: %v", err)
+		}
+		defer planetFile.Close()
+		planetFile.WriteString(line + "\n")
+	}
+	// merge vectorClocks
 	if err != nil {
-		log.Fatalf("Error receiving response: %v", err)
+		log.Fatalf("could not connect: %v", err)
+	}
+	defer conn.Close()
+	resp, err := client.ClockMerge(context.Background(), &pb.VectorClocks{VectorClocks: vectorClocks})
+	if err != nil {
+		log.Fatal(err)
 	}
 	vectorClocks = resp.VectorClocks
-	// merge again
-	mergeRoutine()
 }
 
 func main() {
 	// initialize mergeRoutine in a goroutine on fulcrum2 and 3
 	if fulcrumNumber > 0 {
-		go mergeRoutine()
+		go MergeRoutine()
 	}
 
 	// automaticly remove local files and create folder planets when the server starts
