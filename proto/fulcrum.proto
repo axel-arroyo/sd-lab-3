@@ -16,12 +16,18 @@ service Fulcrum{
     rpc VectorClockMerge(VectorClock) returns (Empty);
     rpc Merge(stream MergeRequest) returns (VectorClocks);
     rpc MergeFulcrums(stream MergeRequest) returns (Empty);
+    rpc BidirectionalMerge(stream MergeRequest) returns (stream MergeResponse);
+    rpc ClockMerge(VectorClocks) returns (VectorClocks);
 }
 
 message Empty{
 }
 
 message MergeRequest{
+    string line = 1;
+}
+
+message MergeResponse{
     string line = 1;
 }
 

@@ -1,0 +1,7 @@
+Integrantes:
+- Axel Arroyo Gómez             201873011-4
+- Vicente De La Rosa Sánchez    201873002-5
+
+En esta máquina se ejecuta el Broker.
+Los archivos se ejecutan con make run.
+Asegurarse que los puertos no estén siendo utilizados por algún otro proceso.

@@ -29,6 +29,8 @@ type FulcrumClient interface {
 	VectorClockMerge(ctx context.Context, in *VectorClock, opts ...grpc.CallOption) (*Empty, error)
 	Merge(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_MergeClient, error)
 	MergeFulcrums(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_MergeFulcrumsClient, error)
+	BidirectionalMerge(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_BidirectionalMergeClient, error)
+	ClockMerge(ctx context.Context, in *VectorClocks, opts ...grpc.CallOption) (*VectorClocks, error)
 }
 
 type fulcrumClient struct {
@@ -170,6 +172,46 @@ func (x *fulcrumMergeFulcrumsClient) CloseAndRecv() (*Empty, error) {
 	return m, nil
 }
 
+func (c *fulcrumClient) BidirectionalMerge(ctx context.Context, opts ...grpc.CallOption) (Fulcrum_BidirectionalMergeClient, error) {
+	stream, err := c.cc.NewStream(ctx, &Fulcrum_ServiceDesc.Streams[2], "/grpc.Fulcrum/BidirectionalMerge", opts...)
+	if err != nil {
+		return nil, err
+	}
+	x := &fulcrumBidirectionalMergeClient{stream}
+	return x, nil
+}
+
+type Fulcrum_BidirectionalMergeClient interface {
+	Send(*MergeRequest) error
+	Recv() (*MergeResponse, error)
+	grpc.ClientStream
+}
+
+type fulcrumBidirectionalMergeClient struct {
+	grpc.ClientStream
+}
+
+func (x *fulcrumBidirectionalMergeClient) Send(m *MergeRequest) error {
+	return x.ClientStream.SendMsg(m)
+}
+
+func (x *fulcrumBidirectionalMergeClient) Recv() (*MergeResponse, error) {
+	m := new(MergeResponse)
+	if err := x.ClientStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func (c *fulcrumClient) ClockMerge(ctx context.Context, in *VectorClocks, opts ...grpc.CallOption) (*VectorClocks, error) {
+	out := new(VectorClocks)
+	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/ClockMerge", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // FulcrumServer is the server API for Fulcrum service.
 // All implementations must embed UnimplementedFulcrumServer
 // for forward compatibility
@@ -185,6 +227,8 @@ type FulcrumServer interface {
 	VectorClockMerge(context.Context, *VectorClock) (*Empty, error)
 	Merge(Fulcrum_MergeServer) error
 	MergeFulcrums(Fulcrum_MergeFulcrumsServer) error
+	BidirectionalMerge(Fulcrum_BidirectionalMergeServer) error
+	ClockMerge(context.Context, *VectorClocks) (*VectorClocks, error)
 	mustEmbedUnimplementedFulcrumServer()
 }
 
@@ -218,6 +262,12 @@ func (UnimplementedFulcrumServer) Merge(Fulcrum_MergeServer) error {
 }
 func (UnimplementedFulcrumServer) MergeFulcrums(Fulcrum_MergeFulcrumsServer) error {
 	return status.Errorf(codes.Unimplemented, "method MergeFulcrums not implemented")
+}
+func (UnimplementedFulcrumServer) BidirectionalMerge(Fulcrum_BidirectionalMergeServer) error {
+	return status.Errorf(codes.Unimplemented, "method BidirectionalMerge not implemented")
+}
+func (UnimplementedFulcrumServer) ClockMerge(context.Context, *VectorClocks) (*VectorClocks, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method ClockMerge not implemented")
 }
 func (UnimplementedFulcrumServer) mustEmbedUnimplementedFulcrumServer() {}
 
@@ -410,6 +460,50 @@ func (x *fulcrumMergeFulcrumsServer) Recv() (*MergeRequest, error) {
 	return m, nil
 }
 
+func _Fulcrum_BidirectionalMerge_Handler(srv interface{}, stream grpc.ServerStream) error {
+	return srv.(FulcrumServer).BidirectionalMerge(&fulcrumBidirectionalMergeServer{stream})
+}
+
+type Fulcrum_BidirectionalMergeServer interface {
+	Send(*MergeResponse) error
+	Recv() (*MergeRequest, error)
+	grpc.ServerStream
+}
+
+type fulcrumBidirectionalMergeServer struct {
+	grpc.ServerStream
+}
+
+func (x *fulcrumBidirectionalMergeServer) Send(m *MergeResponse) error {
+	return x.ServerStream.SendMsg(m)
+}
+
+func (x *fulcrumBidirectionalMergeServer) Recv() (*MergeRequest, error) {
+	m := new(MergeRequest)
+	if err := x.ServerStream.RecvMsg(m); err != nil {
+		return nil, err
+	}
+	return m, nil
+}
+
+func _Fulcrum_ClockMerge_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(VectorClocks)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FulcrumServer).ClockMerge(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.Fulcrum/ClockMerge",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FulcrumServer).ClockMerge(ctx, req.(*VectorClocks))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // Fulcrum_ServiceDesc is the grpc.ServiceDesc for Fulcrum service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -445,6 +539,10 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 			MethodName: "VectorClockMerge",
 			Handler:    _Fulcrum_VectorClockMerge_Handler,
 		},
+		{
+			MethodName: "ClockMerge",
+			Handler:    _Fulcrum_ClockMerge_Handler,
+		},
 	},
 	Streams: []grpc.StreamDesc{
 		{
@@ -455,6 +553,12 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 		{
 			StreamName:    "MergeFulcrums",
 			Handler:       _Fulcrum_MergeFulcrums_Handler,
+			ClientStreams: true,
+		},
+		{
+			StreamName:    "BidirectionalMerge",
+			Handler:       _Fulcrum_BidirectionalMerge_Handler,
+			ServerStreams: true,
 			ClientStreams: true,
 		},
 	},
