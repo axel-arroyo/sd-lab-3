@@ -31,6 +31,7 @@ var (
 	ipFulcrum    = [3]string{"10.6.43.77", "10.6.43.78", "10.6.43.79"}
 	vectorClocks = make(map[string]*pb.Vector)
 	mutex        = &sync.Mutex{}
+	canReceive   = false
 )
 
 func printVectorClocks() {
@@ -435,6 +436,12 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 
 // runs at fulcrum2 and fulcrum3, receives planet files from fulcrum1
 func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) error {
+	// wait till local files are sent to fulcrum1
+	for {
+		if canReceive {
+			break
+		}
+	}
 	// lock mutex untill all files are received in other goroutine
 	mutex.Lock()
 	// remove local files
@@ -449,6 +456,7 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 			// close stream
 			fmt.Println("Merge finished")
 			stream.SendAndClose(&pb.Empty{})
+			canReceive = false
 			// unlock mutex
 			mutex.Unlock()
 			return nil
@@ -520,7 +528,6 @@ func mergeRoutine() {
 	// wait two minutes
 	time.Sleep(time.Second * 30)
 	// lock mutex to avoid deleting/receiving files while sending changes to fulcrum1
-	mutex.Lock()
 	fmt.Println("Merge started")
 	// send vectorClock to fulcrum1
 	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
@@ -566,7 +573,7 @@ func mergeRoutine() {
 		filename.Close()
 	}
 	// fulcrum1 already knows all local changes
-	mutex.Unlock()
+	canReceive = true
 	restartLog()
 	// close send stream
 	stream.CloseSend()
