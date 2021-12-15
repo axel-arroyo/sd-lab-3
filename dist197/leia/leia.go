@@ -13,7 +13,7 @@ const (
 	ipBroker   = "10.6.43.80"
 )
 
-var lastVectorClock map[string][4]int32
+var lastVectorClock = make(map[string][4]int32)
 
 // compare which vector is the most recent one
 func compareMostRecentVectorClock(lastReceived [4]int32, city string) {
