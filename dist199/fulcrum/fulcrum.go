@@ -73,12 +73,10 @@ func addOneToVectorClock(nombre_planeta string) {
 func createPlanet(nombre_planeta string) {
 	// create folder for planet
 	if !planetFolderExists(nombre_planeta) {
-		fmt.Println("Creating folder for planet: ", nombre_planeta)
 		os.Mkdir("fulcrum/planets/"+nombre_planeta, 0777)
 	}
 	// Create files for planet
 	if !planetFileExists(nombre_planeta) {
-		fmt.Println("Creating files for planet: ", nombre_planeta)
 		// create planet file
 		file, err := os.Create("fulcrum/planets/" + nombre_planeta + "/" + nombre_planeta + ".txt")
 		if err != nil {
@@ -517,6 +515,7 @@ func MergeRoutine() {
 		log.Fatal(err)
 	}
 	vectorClocks = resp.VectorClocks
+	MergeRoutine()
 }
 
 func main() {
