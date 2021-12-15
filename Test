@@ -10,5 +10,13 @@ UpdateNumber Planet2 City4 1000
 UpdateName Planet2 City4 CityNewName
 DeleteCity Tatooine City2
 
+UpdateNumber Tatooine Mos_Eisley 5000
+AddCity Tierra Rancagua 5
+AddCity Tierra Valdivia 500
+AddCity Tierra Machali 3
+UpdateName Tierra Machali Caca
+UpdateNumber Tierra Valdivia 100
+
 // Leia
 GetNumberRebelds Tatooine Mos_Eisley
+GetNumberRebelds Tierra Valdivia

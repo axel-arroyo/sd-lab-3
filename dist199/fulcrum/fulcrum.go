@@ -506,7 +506,7 @@ func MergeOtherFulcrums() {
 // Corre en el fulcrum2 y 3, envían el vector clock al fulcrum1 + todos los cambios de cada planeta
 func mergeRoutine() {
 	// wait two minutes
-	time.Sleep(time.Minute * 2)
+	time.Sleep(time.Second * 30)
 	fmt.Println("Merge started")
 	// send vectorClock to fulcrum1
 	conn, err := grpc.Dial(ipFulcrum[0]+portFulcrum, grpc.WithInsecure())
