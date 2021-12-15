@@ -184,6 +184,8 @@ func deleteCity(nombre_planeta string, nombre_ciudad string) {
 
 // UpdateNumber
 func updateSoldados(nombre_planeta string, nombre_ciudad string, numero_soldados int32) {
+	// bool to check if city was found
+	found := false
 	// Actualizar soldados de la ciudad nombre_ciudad en el archivo planets/nombre_planeta.txt
 	filename, err := os.OpenFile("fulcrum/planets/"+nombre_planeta+"/"+nombre_planeta+".txt", os.O_RDWR, 0644)
 	if err != nil {
@@ -196,26 +198,35 @@ func updateSoldados(nombre_planeta string, nombre_ciudad string, numero_soldados
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, nombre_ciudad) {
+			// update found
+			found = true
 			// change number of soldiers
 			old_numero_soldados := strings.Split(line, " ")[2]
 			line = strings.Replace(line, old_numero_soldados, strconv.Itoa(int(numero_soldados)), 1)
 		}
 		lines = append(lines, line)
 	}
-	// rewrite file with new number of soldiers
-	filename.Truncate(0)
-	filename.Seek(0, 0)
-	for _, line := range lines {
-		_, err = filename.WriteString(line + "\n")
-		if err != nil {
-			log.Fatal(err)
+	if !found {
+		// add city to file
+		addCityToFile(nombre_planeta, nombre_ciudad, numero_soldados)
+	} else {
+		// rewrite file with new number of soldiers
+		filename.Truncate(0)
+		filename.Seek(0, 0)
+		for _, line := range lines {
+			_, err = filename.WriteString(line + "\n")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
+		filename.Close()
 	}
-	filename.Close()
 }
 
 // UpdateName
 func updateCiudad(nombre_planeta string, nombre_ciudad string, nombre_reemplazo string) {
+	// bool to check if city was found
+	found := false
 	filename, err := os.OpenFile("fulcrum/planets/"+nombre_planeta+"/"+nombre_planeta+".txt", os.O_RDWR, 0644)
 	if err != nil {
 		log.Fatal(err)
@@ -227,22 +238,28 @@ func updateCiudad(nombre_planeta string, nombre_ciudad string, nombre_reemplazo 
 	for scanner.Scan() {
 		line := scanner.Text()
 		if strings.Contains(line, nombre_ciudad) {
-			// change city name
-			// old_ciudad := strings.Split(line, " ")[1]
+			// update found
+			found = true
+			// change name of city
 			line = strings.Replace(line, nombre_ciudad, nombre_reemplazo, 1)
 		}
 		lines = append(lines, line)
 	}
-	// rewrite file with new city name
-	filename.Truncate(0)
-	filename.Seek(0, 0)
-	for _, line := range lines {
-		_, err = filename.WriteString(line + "\n")
-		if err != nil {
-			log.Fatal(err)
+	if !found {
+		// add city to file
+		addCityToFile(nombre_planeta, nombre_reemplazo, 0)
+	} else {
+		// rewrite file with new city name
+		filename.Truncate(0)
+		filename.Seek(0, 0)
+		for _, line := range lines {
+			_, err = filename.WriteString(line + "\n")
+			if err != nil {
+				log.Fatal(err)
+			}
 		}
+		filename.Close()
 	}
-	filename.Close()
 }
 
 func restartLog() {
@@ -260,18 +277,15 @@ func restartLog() {
 }
 
 func (s *FulcrumServer) AddCity(ctx context.Context, req *pb.AddCityRequest) (*pb.VectorClock, error) {
-	// AddCity
 	createPlanet(req.NombrePlaneta)
 	writeToLog("AddCity", req.NombrePlaneta, req.NombreCiudad, req.Soldados, "")
 	addCityToFile(req.NombrePlaneta, req.NombreCiudad, req.Soldados)
-	// Update vector clock
 	return &pb.VectorClock{}, nil
 }
 
 func (s *FulcrumServer) DeleteCity(ctx context.Context, req *pb.DeleteCityRequest) (*pb.VectorClock, error) {
 	createPlanet(req.NombrePlaneta)
 	writeToLog("DeleteCity", req.NombrePlaneta, req.NombreCiudad, 0, "")
-	// Update vector clock
 	if planetFileExists(req.NombrePlaneta) {
 		deleteCity(req.NombrePlaneta, req.NombreCiudad)
 	}
@@ -283,12 +297,7 @@ func (s *FulcrumServer) DeleteCity(ctx context.Context, req *pb.DeleteCityReques
 func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameRequest) (*pb.VectorClock, error) {
 	createPlanet(req.NombrePlaneta)
 	writeToLog("UpdateName", req.NombrePlaneta, req.NombreCiudad, 0, req.NuevoNombre)
-	// Update vector clock
-	if planetFileExists(req.NombrePlaneta) {
-		updateCiudad(req.NombrePlaneta, req.NombreCiudad, req.NuevoNombre)
-	} else {
-		addCityToFile(req.NombrePlaneta, req.NuevoNombre, 0)
-	}
+	updateCiudad(req.NombrePlaneta, req.NombreCiudad, req.NuevoNombre)
 	// if fulcrum1: X: changes, fulcrum2 --> Y: changes, fulcrum3 --> Z: changes
 	return &pb.VectorClock{}, nil
 }
@@ -297,13 +306,8 @@ func (s *FulcrumServer) UpdateName(ctx context.Context, req *pb.UpdateNameReques
 func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRequest) (*pb.VectorClock, error) {
 	createPlanet(req.NombrePlaneta)
 	writeToLog("UpdateNumber", req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero, "")
-	// Update vector clock
+	updateSoldados(req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero)
 	// Con createPlanet siempre existe el file, hay que cambiar esto
-	if planetFileExists(req.NombrePlaneta) {
-		updateSoldados(req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero)
-	} else {
-		addCityToFile(req.NombrePlaneta, req.NombreCiudad, req.NuevoNumero)
-	}
 	// if fulcrum1: X: changes, fulcrum2 --> Y: changes, fulcrum3 --> Z: changes
 	return &pb.VectorClock{}, nil
 }
@@ -311,9 +315,13 @@ func (s *FulcrumServer) UpdateNumber(ctx context.Context, req *pb.UpdateNumberRe
 func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.GetNumberRebeldesRequest) (*pb.GetNumberRebeldesResponse, error) {
 	// read planet file
 	filename, err := os.OpenFile("fulcrum/planets/"+req.NombrePlaneta+"/"+req.NombrePlaneta+".txt", os.O_RDWR, 0644)
+	// if planet doesnt exist, vector clock is iniatilized as (0,0,0)
 	if err != nil {
 		return &pb.GetNumberRebeldesResponse{
 			NumeroRebeldes: 0,
+			X:              0,
+			Y:              0,
+			Z:              0,
 		}, nil
 	}
 	defer filename.Close()
@@ -327,11 +335,18 @@ func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.Ge
 			numero_soldados_int, _ := strconv.Atoi(numero_soldados)
 			return &pb.GetNumberRebeldesResponse{
 				NumeroRebeldes: int32(numero_soldados_int),
+				X:              vectorClocks[req.NombrePlaneta].X,
+				Y:              vectorClocks[req.NombrePlaneta].Y,
+				Z:              vectorClocks[req.NombrePlaneta].Z,
 			}, nil
 		}
 	}
+	// city does not exists, but vector clock can be iniatilized with certain values
 	return &pb.GetNumberRebeldesResponse{
 		NumeroRebeldes: 0,
+		X:              vectorClocks[req.NombrePlaneta].X,
+		Y:              vectorClocks[req.NombrePlaneta].Y,
+		Z:              vectorClocks[req.NombrePlaneta].Z,
 	}, nil
 }
 

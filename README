@@ -19,3 +19,9 @@ Instrucciones:
 Ingresar a la carpeta con el nombre de la máquina según corresponda y revisar README.
 Asegurarse de que los puertos no están siendo utilizados por algún otro proceso.
 Asegurarse de hacer make clean antes de make run para eliminar archivos que ya existan.
+
+Supuestos:
+- Todas las ciudades de distintos planetas tienen distinto nombre
+
+Consideraciones:
+- Para conflictos en GetNumberRebelds se toma el valor cuyo reloj de vector sea mayor, comparando la suma de todos sus valores ([1,1,1] es menor que [4,0,0])
