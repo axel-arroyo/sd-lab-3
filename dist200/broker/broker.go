@@ -45,7 +45,7 @@ func (s *BrokerServer) GetFulcrum(ctx context.Context, req *pb.GetFulcrumRequest
 	var ip string
 	for {
 		index := rand.Intn(3)
-		ip := ipFulcrum[index]
+		ip = ipFulcrum[index]
 		// dial to ip
 		conn, err := grpc.Dial(ip+portFulcrum, grpc.WithInsecure())
 		if err != nil {
