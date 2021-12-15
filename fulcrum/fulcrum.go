@@ -27,8 +27,9 @@ const (
 )
 
 var (
-	ipFulcrum    = [3]string{"10.6.43.77", "10.6.43.78", "10.6.43.79"}
-	vectorClocks = make(map[string]*pb.Vector)
+	ipFulcrum      = [3]string{"10.6.43.77", "10.6.43.78", "10.6.43.79"}
+	vectorClocks   = make(map[string]*pb.Vector)
+	fulcrumsMerged = 0
 )
 
 func printVectorClocks() {
@@ -389,6 +390,7 @@ func (s *FulcrumServer) Merge(stream pb.Fulcrum_MergeServer) error {
 			go MergeOtherFulcrums()
 			// update vector clock in fulcrum 2 and 3
 			stream.SendAndClose(&pb.VectorClocks{VectorClocks: vectorClocks})
+			fulcrumsMerged++
 			fmt.Println("Sent vector clocks to connected fulcrum")
 			return nil
 		}
@@ -466,6 +468,12 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 // sends local files to fulcrum2 and fulcrum3
 func MergeOtherFulcrums() {
 	fmt.Println("MergeOtherFulcrums")
+	// wait till all fulcrums sent their files
+	for {
+		if fulcrumsMerged == 2 {
+			break
+		}
+	}
 	for _, ip := range ipFulcrum {
 		if ip != ipFulcrum[0] {
 			// connect to other fulcrums
@@ -501,6 +509,7 @@ func MergeOtherFulcrums() {
 			stream.CloseSend()
 		}
 	}
+	fulcrumsMerged = 0
 }
 
 // Corre en el fulcrum2 y 3, envían el vector clock al fulcrum1 + todos los cambios de cada planeta
