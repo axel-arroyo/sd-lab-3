@@ -449,8 +449,9 @@ func (s *FulcrumServer) MergeFulcrums(stream pb.Fulcrum_MergeFulcrumsServer) err
 	// create folder planets
 	os.Mkdir("fulcrum/planets", 0777)
 	// for each line received, update local files
-	fmt.Println("Receiving files from fulcrum1")
+	// fmt.Println("Receiving files from fulcrum1")
 	for {
+		fmt.Println("Starting to receive files")
 		req, err := stream.Recv()
 		if err == io.EOF {
 			// close stream
@@ -519,6 +520,7 @@ func MergeOtherFulcrums() {
 				planet_file.Close()
 			}
 			// close send stream
+			fmt.Println("Closed stream")
 			stream.CloseSend()
 		}
 	}
