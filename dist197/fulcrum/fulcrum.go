@@ -366,7 +366,6 @@ func (s *FulcrumServer) BidirectionalMerge(stream pb.Fulcrum_BidirectionalMergeS
 			// send local files to connected fulcrum
 			for planet := range vectorClocks {
 				// read planet file and send all lines to fulcrum2 and fulcrum3
-				fmt.Println("Opening file fulcrum/planets/" + planet + "/" + planet + ".txt")
 				filename, err := os.OpenFile("fulcrum/planets/"+planet+"/"+planet+".txt", os.O_RDWR, 0644)
 				if err != nil {
 					log.Fatalf("could not open file: %v", err)
