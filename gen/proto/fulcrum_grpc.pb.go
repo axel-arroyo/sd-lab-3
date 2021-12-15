@@ -18,6 +18,8 @@ const _ = grpc.SupportPackageIsVersion7
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type FulcrumClient interface {
+	IsAvailable(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error)
+	// functions
 	AddCity(ctx context.Context, in *AddCityRequest, opts ...grpc.CallOption) (*VectorClock, error)
 	DeleteCity(ctx context.Context, in *DeleteCityRequest, opts ...grpc.CallOption) (*VectorClock, error)
 	UpdateName(ctx context.Context, in *UpdateNameRequest, opts ...grpc.CallOption) (*VectorClock, error)
@@ -35,6 +37,15 @@ type fulcrumClient struct {
 
 func NewFulcrumClient(cc grpc.ClientConnInterface) FulcrumClient {
 	return &fulcrumClient{cc}
+}
+
+func (c *fulcrumClient) IsAvailable(ctx context.Context, in *Empty, opts ...grpc.CallOption) (*Empty, error) {
+	out := new(Empty)
+	err := c.cc.Invoke(ctx, "/grpc.Fulcrum/IsAvailable", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
 }
 
 func (c *fulcrumClient) AddCity(ctx context.Context, in *AddCityRequest, opts ...grpc.CallOption) (*VectorClock, error) {
@@ -163,6 +174,8 @@ func (x *fulcrumMergeFulcrumsClient) CloseAndRecv() (*Empty, error) {
 // All implementations must embed UnimplementedFulcrumServer
 // for forward compatibility
 type FulcrumServer interface {
+	IsAvailable(context.Context, *Empty) (*Empty, error)
+	// functions
 	AddCity(context.Context, *AddCityRequest) (*VectorClock, error)
 	DeleteCity(context.Context, *DeleteCityRequest) (*VectorClock, error)
 	UpdateName(context.Context, *UpdateNameRequest) (*VectorClock, error)
@@ -179,6 +192,9 @@ type FulcrumServer interface {
 type UnimplementedFulcrumServer struct {
 }
 
+func (UnimplementedFulcrumServer) IsAvailable(context.Context, *Empty) (*Empty, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method IsAvailable not implemented")
+}
 func (UnimplementedFulcrumServer) AddCity(context.Context, *AddCityRequest) (*VectorClock, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method AddCity not implemented")
 }
@@ -214,6 +230,24 @@ type UnsafeFulcrumServer interface {
 
 func RegisterFulcrumServer(s grpc.ServiceRegistrar, srv FulcrumServer) {
 	s.RegisterService(&Fulcrum_ServiceDesc, srv)
+}
+
+func _Fulcrum_IsAvailable_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(Empty)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(FulcrumServer).IsAvailable(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/grpc.Fulcrum/IsAvailable",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(FulcrumServer).IsAvailable(ctx, req.(*Empty))
+	}
+	return interceptor(ctx, in, info, handler)
 }
 
 func _Fulcrum_AddCity_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
@@ -383,6 +417,10 @@ var Fulcrum_ServiceDesc = grpc.ServiceDesc{
 	ServiceName: "grpc.Fulcrum",
 	HandlerType: (*FulcrumServer)(nil),
 	Methods: []grpc.MethodDesc{
+		{
+			MethodName: "IsAvailable",
+			Handler:    _Fulcrum_IsAvailable_Handler,
+		},
 		{
 			MethodName: "AddCity",
 			Handler:    _Fulcrum_AddCity_Handler,

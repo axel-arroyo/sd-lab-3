@@ -5,6 +5,8 @@ option go_package = "./proto";
 import "broker.proto";
 
 service Fulcrum{
+    rpc IsAvailable(Empty) returns (Empty);
+    // functions
     rpc AddCity(AddCityRequest) returns (VectorClock);
     rpc DeleteCity(DeleteCityRequest) returns (VectorClock);
     rpc UpdateName(UpdateNameRequest) returns (VectorClock);

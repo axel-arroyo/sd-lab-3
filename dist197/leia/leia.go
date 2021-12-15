@@ -13,19 +13,15 @@ const (
 	ipBroker   = "10.6.43.80"
 )
 
-var lastVectorClock = make(map[string][4]int32)
+var lastVectorClock = make(map[string]*pb.GetNumberRebeldesResponse)
 
 // compare which vector is the most recent one
-func compareMostRecentVectorClock(lastReceived [4]int32, city string) {
+func compareMostRecentVectorClock(lastReceived *pb.GetNumberRebeldesResponse, city string) {
 	// revise if city exists in lastVectorClock
 	if _, ok := lastVectorClock[city]; ok {
 		// compare lastReceived with lastVectorClock[city]
-		var sumaLast int32
-		var sumaReceived int32
-		for i := 0; i < 3; i++ {
-			sumaLast += lastVectorClock[city][i]
-			sumaReceived += lastReceived[i]
-		}
+		sumaLast := lastVectorClock[city].X + lastVectorClock[city].Y + lastVectorClock[city].Z
+		sumaReceived := lastReceived.X + lastReceived.Y + lastReceived.Z
 		// if received vector clock has a sum of its components larger than the local one, reassign vector clock to most recent
 		if sumaReceived > sumaLast {
 			lastVectorClock[city] = lastReceived
@@ -51,9 +47,9 @@ func GetNumberRebelds(planet string, city string) {
 		return
 	}
 	// update local vector clock to consistency (value of map is X, Y, Z from vector clock and number as last index)
-	lastReceived := [4]int32{resp.X, resp.Y, resp.Z, resp.NumeroRebeldes}
+	lastReceived := resp
 	compareMostRecentVectorClock(lastReceived, city)
-	fmt.Printf("Numero de rebeldes: %d\n", lastVectorClock[city][3])
+	fmt.Printf("Numero de rebeldes: %d\n", lastVectorClock[city].NumeroRebeldes)
 	return
 }
 

@@ -37,14 +37,28 @@ func (s *BrokerServer) GetNumberRebeldes(ctx context.Context, req *pb.GetNumberR
 	}
 	log.Printf("Received: %d", r.NumeroRebeldes)
 	// send updated vector clock to leia
-	return &pb.GetNumberRebeldesResponse{NumeroRebeldes: r.NumeroRebeldes, X: r.X, Y: r.Y, Z: r.Z}, nil
+	return &pb.GetNumberRebeldesResponse{NumeroRebeldes: r.NumeroRebeldes, X: r.X, Y: r.Y, Z: r.Z, Ip: ipFulcrum[index]}, nil
 }
 
 func (s *BrokerServer) GetFulcrum(ctx context.Context, req *pb.GetFulcrumRequest) (*pb.GetFulcrumResponse, error) {
-	// Informantes llaman para saber a que fulcrum se refiere
-	// pick a random ip from ipFulcrum
-	index := rand.Intn(3)
-	ip := ipFulcrum[index]
+	// pick a random available fulcrum
+	var ip string
+	for {
+		index := rand.Intn(3)
+		ip := ipFulcrum[index]
+		// dial to ip
+		conn, err := grpc.Dial(ip+portFulcrum, grpc.WithInsecure())
+		if err != nil {
+			log.Fatalf("did not connect: %v", err)
+		}
+		defer conn.Close()
+		c := pb.NewFulcrumClient(conn)
+		_, err = c.IsAvailable(ctx, &pb.Empty{})
+		if err != nil {
+			log.Fatalf("could not greet: %v", err)
+		}
+		break
+	}
 	// return ip
 	return &pb.GetFulcrumResponse{IpFulcrum: ip}, nil
 }

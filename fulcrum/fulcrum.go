@@ -352,6 +352,10 @@ func (s *FulcrumServer) GetNumberRebeldesFulcrum(ctx context.Context, req *pb.Ge
 	}, nil
 }
 
+func (s *FulcrumServer) IsAvailable(ctx context.Context, req *pb.Empty) (*pb.Empty, error) {
+	return &pb.Empty{}, nil
+}
+
 // runs at fulcrum1
 func (s *FulcrumServer) VectorClockMerge(ctx context.Context, req *pb.VectorClock) (*pb.Empty, error) {
 	// merge vector clocks
